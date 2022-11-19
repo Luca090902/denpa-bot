@@ -8,6 +8,7 @@ module.exports = {
     client.distube.play(message.member.voice.channel, string, {
       member: message.member,
       textChannel: message.channel,
+      metadata: message,
       message
     })
   }

@@ -1,12 +1,13 @@
 {
   "prefix": "!",
-  "token": "token goes here",
+  "token": "TOKEN HERE",
   "emoji": {
     "play": "▶️",
     "stop": "⏹️",
     "queue": "📄",
     "success": "☑️",
     "repeat": "🔁",
-    "error": "❌"
+    "error": "❌",
+    "denpabot": ":satellite:"
   }
 }

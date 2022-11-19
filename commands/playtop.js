@@ -1,6 +1,6 @@
 module.exports = {
   name: 'playtop',
-  aliases: ['pt'],
+  aliases: ['pt', 'pn'],
   inVoiceChannel: true,
   run: async (client, message, args) => {
     const string = args.join(' ')
@@ -8,6 +8,7 @@ module.exports = {
     client.distube.play(message.member.voice.channel, string, {
       member: message.member,
       textChannel: message.channel,
+      metadata: message,
       message,
       position: 1
     })
