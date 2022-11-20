@@ -2,7 +2,7 @@ const config = require('./../config.json');
 const ytfps = require('ytfps');
 module.exports = {
     name: 'toromi',
-    aliases: [';;t'],
+    aliases: ['t'],
     inVoiceChannel: true,
     run: async (client, message) => {
         var string = '';
