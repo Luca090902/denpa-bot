@@ -9,9 +9,19 @@ module.exports = {
       if (isNaN(args[0])) {
         const song = await queue.skip()
         message.channel.send(`${client.emotes.success} | Skipped! Now playing:\n${song.name}`)
-      } else {
-        var skippedsong = queue.songs.splice(args[0], 1);
-        message.channel.send(`${client.emotes.success} | Skipped song ${skippedsong[0].name}`)
+      }
+      else {
+        await queue._taskQueue.queuing();
+        try {
+          if (args[0] >= queue.songs.length) {
+            message.channel.send(`${client.emotes.error} | Not found. No song has been skipped.`)
+          } else {
+            var skippedsong = queue.songs.splice(args[0], 1);
+            message.channel.send(`${client.emotes.success} | Skipped song ${skippedsong[0].name}`)
+          }
+        } finally {
+          queue._taskQueue.resolve();
+        }
       }
     } catch (e) {
       message.channel.send(`${client.emotes.error} | ${e}`)
