@@ -14,3 +14,11 @@ Run the following commands
 docker build -t lyptea/denpabot .
 docker push lyptea/denpabot
 ```
+
+Then on host machine cd into docker folder
+
+```
+docker-compose pull
+docker-compose up -d
+docker exec -it denpabot /bin/bash
+```
