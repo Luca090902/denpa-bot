@@ -96,7 +96,7 @@ client.distube
   .on('finish', queue => queue.textChannel.send('Finished!'))
 
 class DenpartyTracker {
-  constructor() {
+  constructor () {
     this.playlists = new Map()
     this.markers = new Map()
     this._backupDelta = 5
@@ -115,26 +115,26 @@ class DenpartyTracker {
               return
             }
             this.playlists.set(guildId, JSON.parse(data))
-            this.markers.set(guildId, 0)
+            this.markers.set(guildId, Date.now())
           })
         }
       }
     })
   }
 
-  getMessageById(guildId, messageId) {
+  getMessageById (guildId, messageId) {
     const target = (this.playlists.get(guildId) ?? []).filter(datum => datum.messageId === messageId)
     return target[0] ?? null
   }
 
-  getMarker(guildId) {
+  getMarker (guildId) {
     if (!this.markers.get(guildId)) {
-      this.markers.set(guildId, 0)
+      this.markers.set(guildId, Date.now())
     }
     return this.markers.get(guildId)
   }
 
-  setMarker(guildId, messageId) {
+  setMarker (guildId, messageId) {
     const target = this.getMessageById(guildId, messageId)
     if (!target) {
       throw new Error('Incorrect message ID or guild ID')
@@ -143,21 +143,21 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrInsertPlaylistId(guildId) {
+  getOrInsertPlaylistId (guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
     return this.playlists.get(guildId)
   }
 
-  getRecord(song) {
+  getRecord (song) {
     const target = this.getOrInsertPlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
     return result[0] ?? null
   }
 
-  onSongPlayed(song) {
+  onSongPlayed (song) {
     const target = this.getRecord(song)
     if (!target) {
       throw new Error('A song that had not been recorded was played...')
@@ -166,16 +166,11 @@ class DenpartyTracker {
     target.wasPlayed = true
   }
 
-  getDenpartyLength(guildId) {
+  getDenpartyLength (guildId) {
     return this.getOrInsertPlaylistId(guildId).length
   }
 
-  record(song, playlist) {
-    // Verify we don't already have this song in
-    if (playlist === undefined) {
-      playlist = null
-    }
-
+  record (song) {
     if (this.getRecord(song)) return
 
     const datum = {
@@ -186,9 +181,9 @@ class DenpartyTracker {
       messageId: song.metadata.id,
       timestamp: song.metadata.createdTimestamp,
       wasPlayed: false,
-      playlist
+      playlist: null
     }
-    this.playlists.get(song.metadata.guildId).push(datum)
+    this.getOrInsertPlaylistId(song.metadata.guildId).push(datum)
     // Make sure to keep state backups
     if (this.getDenpartyLength(song.metadata.guildId) % this._backupDelta === 0) {
       this.dumpStateFull(song.metadata.guildId)
@@ -197,16 +192,50 @@ class DenpartyTracker {
     return datum
   }
 
-  async dumpStateFull(guildId) {
+  recordPlaylist (playlist) {
+    if (playlist.songs.length < 1) return
+
+    const guildId = playlist.songs[0].metadata.guildId
+
+    playlist.songs.forEach(song =>
+      this.getOrInsertPlaylistId(song.metadata.guildId).push({
+        url: song.url,
+        queued: song.name,
+        video_id: song.id,
+        caused_by: song.user.username,
+        messageId: song.metadata.id,
+        timestamp: song.metadata.createdTimestamp,
+        wasPlayed: false,
+        playlist: playlist.url
+      })
+    )
+
+    // Always dump state after playlist addition 'cos why not
+    this.dumpStateFull(guildId)
+  }
+
+  filterDuplicates (guildId) {
+    const target = this.getOrInsertPlaylistId(guildId)
+    const currDenpartyMarker = this.getMarker(guildId)
+    const denpartySongs = target.filter(datum => datum.timestamp >= currDenpartyMarker)
+    const prevDenpartySongs = target.filter(datum => datum.timestamp < currDenpartyMarker)
+
+    const dupelessDenpartySongSet = new Set()
+    denpartySongs.forEach(datum => dupelessDenpartySongSet.add(datum.url))
+    const dupelessDenpartySong = denpartySongs.filter(datum => dupelessDenpartySongSet.delete(datum.url))
+
+    this.playlists.set(guildId, [...prevDenpartySongs, ...dupelessDenpartySong])
+  }
+
+  async dumpStateFull (guildId) {
     const target = this.getOrInsertPlaylistId(guildId)
 
-    // Should probably throttle this for when playlists are getting added, but whatever
     const fhandle = await fsPromises.open(`denparty_${guildId}.json`, 'w')
     await fhandle.writeFile(JSON.stringify(target), { encoding: 'utf-8' })
     await fhandle.close()
   }
 
-  async dumpStatePartial(guildId) {
+  async dumpStatePartial (guildId) {
     const fullTarget = this.getOrInsertPlaylistId(guildId)
     const marker = this.getMarker(guildId)
 
@@ -219,16 +248,12 @@ class DenpartyTracker {
 const denpartyTracker = new DenpartyTracker()
 
 client.distube
-  .on('playSong', (_, song) => {
-    denpartyTracker.onSongPlayed(song)
-  })
-  .on('addSong', (_, song) => {
-    denpartyTracker.record(song)
-  })
-  .on('addList', (queue, playlist) => {
-    for (const song of playlist.songs) {
-      denpartyTracker.record(song, playlist.url)
-    }
+  .on('playSong', (_, song) => denpartyTracker.onSongPlayed(song))
+  .on('addSong', (_, song) => denpartyTracker.record(song))
+  .on('addList', (_, playlist) => denpartyTracker.recordPlaylist(playlist))
+  .on('denpartyGetMarker', channel => {
+    const marker = denpartyTracker.getMarker(channel.guildId)
+    channel.send(`${client.emotes.denpabot} | Current denparty start time is set to <t:${Math.floor(marker / 1000)}:f>`)
   })
   .on('denpartySetMarker', (channel, targetMessageId) => {
     let marker = 0
@@ -239,9 +264,16 @@ client.distube
       console.error(e)
       return
     }
-    channel.send(`${client.emotes.denpabot} | Set current denparty start date to <t:${Math.floor(marker / 1000)}:f>`)
+    channel.send(`${client.emotes.denpabot} | Set current denparty start time to <t:${Math.floor(marker / 1000)}:f>`)
   })
   .on('denpartyDump', async channel => {
+    const initialCount = denpartyTracker.getDenpartyLength(channel.guildId)
+    denpartyTracker.filterDuplicates(channel.guildId)
+    const deltaCount = initialCount - denpartyTracker.getDenpartyLength(channel.guildId)
+    if (deltaCount > 0) {
+      channel.send(`${client.emotes.denpabot} | There were ${deltaCount} duplicates in the playlist removed`)
+    }
+
     try {
       await denpartyTracker.dumpStatePartial(channel.guildId)
     } catch (e) {

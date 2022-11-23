@@ -3,7 +3,9 @@ module.exports = {
   aliases: [],
   inVoiceChannel: false,
   run: async (client, message, args) => {
-    if (args.length !== 1) { return message.channel.send('You need to specify the ID of the message which started the denparty') }
-    client.distube.emit('denpartySetMarker', message.channel, args[0])
+    if (isNaN(args[0])) {
+      return client.distube.emit('denpartyGetMarker', message.channel)
+    }
+    return client.distube.emit('denpartySetMarker', message.channel, args[0])
   }
 }
