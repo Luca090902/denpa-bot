@@ -16,6 +16,11 @@ const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
 
 client.config = require('./config.json')
+const { TOKEN } = process.env
+if (TOKEN) {
+  client.config.token = TOKEN
+}
+
 client.distube = new DisTube(client, {
   leaveOnStop: false,
   nsfw: true,
