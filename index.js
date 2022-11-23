@@ -115,7 +115,6 @@ class DenpartyTracker {
               return
             }
             this.playlists.set(guildId, JSON.parse(data))
-            this.markers.set(guildId, Date.now())
           })
         }
       }
@@ -127,9 +126,16 @@ class DenpartyTracker {
     return target[0] ?? null
   }
 
-  getMarker (guildId) {
+  getOrInsertMarker (guildId) {
     if (!this.markers.get(guildId)) {
-      this.markers.set(guildId, Date.now())
+      // Determine most recent unplayed song
+      const songs = this.getOrGeneratePlaylistId(guildId)
+      const recentUnplayed = songs.reduce(
+        (anchorSong, newSong) =>
+          anchorSong ? (newSong.wasPlayed ? null : anchorSong) : !newSong.wasPlayed ? newSong : null,
+        null
+      )
+      this.markers.set(guildId, recentUnplayed?.timestamp ?? Date.now())
     }
     return this.markers.get(guildId)
   }
@@ -143,7 +149,7 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrInsertPlaylistId (guildId) {
+  getOrGeneratePlaylistId (guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
@@ -151,8 +157,8 @@ class DenpartyTracker {
   }
 
   getRecord (song) {
-    const target = this.getOrInsertPlaylistId(song.metadata.guildId)
-    const currentDenpartyMarker = this.getMarker(song.metadata.guildId)
+    const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
+    const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
     return result[0] ?? null
   }
@@ -167,11 +173,12 @@ class DenpartyTracker {
   }
 
   getDenpartyLength (guildId) {
-    return this.getOrInsertPlaylistId(guildId).length
+    return this.getOrGeneratePlaylistId(guildId).length
   }
 
   record (song) {
-    if (this.getRecord(song)) return
+    const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
+    if (target.length && this.getRecord(song)) return
 
     const datum = {
       url: song.url,
@@ -183,7 +190,7 @@ class DenpartyTracker {
       wasPlayed: false,
       playlist: null
     }
-    this.getOrInsertPlaylistId(song.metadata.guildId).push(datum)
+    target.push(datum)
     // Make sure to keep state backups
     if (this.getDenpartyLength(song.metadata.guildId) % this._backupDelta === 0) {
       this.dumpStateFull(song.metadata.guildId)
@@ -198,7 +205,7 @@ class DenpartyTracker {
     const guildId = playlist.songs[0].metadata.guildId
 
     playlist.songs.forEach(song =>
-      this.getOrInsertPlaylistId(song.metadata.guildId).push({
+      this.getOrGeneratePlaylistId(song.metadata.guildId).push({
         url: song.url,
         queued: song.name,
         video_id: song.id,
@@ -215,8 +222,8 @@ class DenpartyTracker {
   }
 
   filterDuplicates (guildId) {
-    const target = this.getOrInsertPlaylistId(guildId)
-    const currDenpartyMarker = this.getMarker(guildId)
+    const target = this.getOrGeneratePlaylistId(guildId)
+    const currDenpartyMarker = this.getOrInsertMarker(guildId)
     const denpartySongs = target.filter(datum => datum.timestamp >= currDenpartyMarker)
     const prevDenpartySongs = target.filter(datum => datum.timestamp < currDenpartyMarker)
 
@@ -228,7 +235,7 @@ class DenpartyTracker {
   }
 
   async dumpStateFull (guildId) {
-    const target = this.getOrInsertPlaylistId(guildId)
+    const target = this.getOrGeneratePlaylistId(guildId)
 
     const fhandle = await fsPromises.open(`denparty_${guildId}.json`, 'w')
     await fhandle.writeFile(JSON.stringify(target), { encoding: 'utf-8' })
@@ -236,8 +243,8 @@ class DenpartyTracker {
   }
 
   async dumpStatePartial (guildId) {
-    const fullTarget = this.getOrInsertPlaylistId(guildId)
-    const marker = this.getMarker(guildId)
+    const fullTarget = this.getOrGeneratePlaylistId(guildId)
+    const marker = this.getOrInsertMarker(guildId)
 
     const target = fullTarget.filter(datum => datum.timestamp >= marker)
     const fhandle = await fsPromises.open(`denparty_${guildId}_request.json`, 'w')
@@ -252,7 +259,7 @@ client.distube
   .on('addSong', (_, song) => denpartyTracker.record(song))
   .on('addList', (_, playlist) => denpartyTracker.recordPlaylist(playlist))
   .on('denpartyGetMarker', channel => {
-    const marker = denpartyTracker.getMarker(channel.guildId)
+    const marker = denpartyTracker.getOrInsertMarker(channel.guildId)
     channel.send(`${client.emotes.denpabot} | Current denparty start time is set to <t:${Math.floor(marker / 1000)}:f>`)
   })
   .on('denpartySetMarker', (channel, targetMessageId) => {
