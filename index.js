@@ -72,12 +72,12 @@ client.distube.setMaxListeners(2)
 client.distube
   .on('playSong', (queue, song) => {
     queue.textChannel.send(
-      `${client.emotes.play} | Playing \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: ${song.user}`
+      `${client.emotes.play} | Playing \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\``
     )
   })
   .on('addSong', (queue, song) => {
     queue.textChannel.send(
-      `${client.emotes.success} | Added ${song.name} - \`${song.formattedDuration}\` to the queue by ${song.user}`
+      `${client.emotes.success} | Added ${song.name} - \`${song.formattedDuration}\` to the queue by \`${song.user.username}\``
     )
   })
   .on('addList', (queue, playlist) => {
@@ -96,7 +96,7 @@ client.distube
   .on('finish', queue => queue.textChannel.send('Finished!'))
 
 class DenpartyTracker {
-  constructor () {
+  constructor() {
     this.playlists = new Map()
     this.markers = new Map()
     this._backupDelta = 5
@@ -122,19 +122,19 @@ class DenpartyTracker {
     })
   }
 
-  getMessageById (guildId, messageId) {
+  getMessageById(guildId, messageId) {
     const target = (this.playlists.get(guildId) ?? []).filter(datum => datum.messageId === messageId)
     return target[0] ?? null
   }
 
-  getMarker (guildId) {
+  getMarker(guildId) {
     if (!this.markers.get(guildId)) {
       this.markers.set(guildId, 0)
     }
     return this.markers.get(guildId)
   }
 
-  setMarker (guildId, messageId) {
+  setMarker(guildId, messageId) {
     const target = this.getMessageById(guildId, messageId)
     if (!target) {
       throw new Error('Incorrect message ID or guild ID')
@@ -143,21 +143,21 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrInsertPlaylistId (guildId) {
+  getOrInsertPlaylistId(guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
     return this.playlists.get(guildId)
   }
 
-  getRecord (song) {
+  getRecord(song) {
     const target = this.getOrInsertPlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
     return result[0] ?? null
   }
 
-  onSongPlayed (song) {
+  onSongPlayed(song) {
     const target = this.getRecord(song)
     if (!target) {
       throw new Error('A song that had not been recorded was played...')
@@ -166,11 +166,11 @@ class DenpartyTracker {
     target.wasPlayed = true
   }
 
-  getDenpartyLength (guildId) {
+  getDenpartyLength(guildId) {
     return this.getOrInsertPlaylistId(guildId).length
   }
 
-  record (song, playlist) {
+  record(song, playlist) {
     // Verify we don't already have this song in
     if (playlist === undefined) {
       playlist = null
@@ -197,7 +197,7 @@ class DenpartyTracker {
     return datum
   }
 
-  async dumpStateFull (guildId) {
+  async dumpStateFull(guildId) {
     const target = this.getOrInsertPlaylistId(guildId)
 
     // Should probably throttle this for when playlists are getting added, but whatever
@@ -206,7 +206,7 @@ class DenpartyTracker {
     await fhandle.close()
   }
 
-  async dumpStatePartial (guildId) {
+  async dumpStatePartial(guildId) {
     const fullTarget = this.getOrInsertPlaylistId(guildId)
     const marker = this.getMarker(guildId)
 
