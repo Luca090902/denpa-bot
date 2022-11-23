@@ -102,14 +102,14 @@ class DenpartyTracker {
     this._backupDelta = 5
 
     // Restore the state from denparty_GID.json when shit goes tits up
-    fs.readdir('.', (err, files) => {
+    fs.readdir('./backups/', (err, files) => {
       if (err) return
       for (const fname of files) {
         const denpartyRegex = /denparty_(\d+)\.json/
         const maybeMatch = fname.match(denpartyRegex)
         const guildId = maybeMatch ? maybeMatch[1] : null
         if (guildId) {
-          fs.readFile(`denparty_${guildId}.json`, { encoding: 'utf-8' }, (err, data) => {
+          fs.readFile(`./backups/denparty_${guildId}.json`, { encoding: 'utf-8' }, (err, data) => {
             if (err) {
               console.error(err)
               return
@@ -237,7 +237,7 @@ class DenpartyTracker {
   async dumpStateFull (guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
 
-    const fhandle = await fsPromises.open(`denparty_${guildId}.json`, 'w')
+    const fhandle = await fsPromises.open(`./backups/denparty_${guildId}.json`, 'w')
     await fhandle.writeFile(JSON.stringify(target), { encoding: 'utf-8' })
     await fhandle.close()
   }
@@ -247,7 +247,7 @@ class DenpartyTracker {
     const marker = this.getOrInsertMarker(guildId)
 
     const target = fullTarget.filter(datum => datum.timestamp >= marker)
-    const fhandle = await fsPromises.open(`denparty_${guildId}_request.json`, 'w')
+    const fhandle = await fsPromises.open(`./backups/denparty_${guildId}_request.json`, 'w')
     await fhandle.writeFile(JSON.stringify(target), { encoding: 'utf-8' })
     await fhandle.close()
   }
@@ -292,7 +292,7 @@ client.distube
     channel.send({
       files: [
         {
-          attachment: `./denparty_${channel.guildId}_request.json`,
+          attachment: `./backups/denparty_${channel.guildId}_request.json`,
           name: 'denparty.json',
           description: 'Denparty JSON dump'
         }

@@ -108,3 +108,4 @@ dist
 .yarn/
 yarn.lock
 /my-config.json
+/backups
