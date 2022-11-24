@@ -94,7 +94,7 @@ client.distube
     if (channel) channel.send(`${client.emotes.error} | An error encountered: ${e.toString().slice(0, 1974)}`)
     else console.error(e)
   })
-  .on('empty', channel => channel.send('Voice channel is empty! Leaving the channel...'))
+  .on('empty', queue => queue.textChannel.send('Voice channel is empty! Leaving the channel...'))
   .on('searchNoResult', (message, query) =>
     message.channel.send(`${client.emotes.error} | No result found for \`${query}\`!`)
   )
