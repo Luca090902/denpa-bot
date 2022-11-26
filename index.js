@@ -77,7 +77,7 @@ client.distube.setMaxListeners(2)
 client.distube
   .on('playSong', (queue, song) => {
     queue.textChannel.send(
-      `${client.emotes.play} | Playing \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\``
+      `${client.emotes.play} | Playing \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\` \n<${song.url}>`
     )
   })
   .on('addSong', (queue, song) => {
@@ -101,7 +101,7 @@ client.distube
   .on('finish', queue => queue.textChannel.send('Finished!'))
 
 class DenpartyTracker {
-  constructor () {
+  constructor() {
     this.playlists = new Map()
     this.markers = new Map()
     this._backupDelta = 5
@@ -126,12 +126,12 @@ class DenpartyTracker {
     })
   }
 
-  getMessageById (guildId, messageId) {
+  getMessageById(guildId, messageId) {
     const target = (this.playlists.get(guildId) ?? []).filter(datum => datum.messageId === messageId)
     return target[0] ?? null
   }
 
-  getOrInsertMarker (guildId) {
+  getOrInsertMarker(guildId) {
     if (!this.markers.get(guildId)) {
       // Determine most recent unplayed song
       const songs = this.getOrGeneratePlaylistId(guildId)
@@ -145,7 +145,7 @@ class DenpartyTracker {
     return this.markers.get(guildId)
   }
 
-  setMarker (guildId, messageId) {
+  setMarker(guildId, messageId) {
     const target = this.getMessageById(guildId, messageId)
     if (!target) {
       throw new Error('Incorrect message ID or guild ID')
@@ -154,21 +154,21 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrGeneratePlaylistId (guildId) {
+  getOrGeneratePlaylistId(guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
     return this.playlists.get(guildId)
   }
 
-  getRecord (song) {
+  getRecord(song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
     return result[0] ?? null
   }
 
-  onSongPlayed (song) {
+  onSongPlayed(song) {
     const target = this.getRecord(song)
     if (!target) {
       throw new Error('A song that had not been recorded was played...')
@@ -177,11 +177,11 @@ class DenpartyTracker {
     target.wasPlayed = true
   }
 
-  getDenpartyLength (guildId) {
+  getDenpartyLength(guildId) {
     return this.getOrGeneratePlaylistId(guildId).length
   }
 
-  record (song) {
+  record(song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     if (target.length && this.getRecord(song)) return
 
@@ -204,7 +204,7 @@ class DenpartyTracker {
     return datum
   }
 
-  recordPlaylist (playlist) {
+  recordPlaylist(playlist) {
     if (playlist.songs.length < 1) return
 
     const guildId = playlist.songs[0].metadata.guildId
@@ -226,7 +226,7 @@ class DenpartyTracker {
     this.dumpStateFull(guildId)
   }
 
-  filterDuplicates (guildId) {
+  filterDuplicates(guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
     const currDenpartyMarker = this.getOrInsertMarker(guildId)
     const denpartySongs = target.filter(datum => datum.timestamp >= currDenpartyMarker)
@@ -239,7 +239,7 @@ class DenpartyTracker {
     this.playlists.set(guildId, [...prevDenpartySongs, ...dupelessDenpartySong])
   }
 
-  async dumpStateFull (guildId) {
+  async dumpStateFull(guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
 
     const fhandle = await fsPromises.open(`./backups/denparty_${guildId}.json`, 'w')
@@ -247,7 +247,7 @@ class DenpartyTracker {
     await fhandle.close()
   }
 
-  async dumpStatePartial (guildId) {
+  async dumpStatePartial(guildId) {
     const fullTarget = this.getOrGeneratePlaylistId(guildId)
     const marker = this.getOrInsertMarker(guildId)
 
