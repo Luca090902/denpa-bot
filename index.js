@@ -76,18 +76,39 @@ client.distube.setMaxListeners(2)
 
 client.distube
   .on('playSong', (queue, song) => {
+    var np = `${client.emotes.play} | \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\` \n<${song.url}>`
+    const queueEmbed = new Discord.EmbedBuilder()
+      .setColor(0x0099ff)
+      .setTitle('Playing')
+      .setThumbnail(song.thumbnail)
+      .setDescription(np)
     queue.textChannel.send(
-      `${client.emotes.play} | Playing \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\` \n<${song.url}>`
+      { embeds: [queueEmbed] }
     )
   })
   .on('addSong', (queue, song) => {
+    var np =
+      `${client.emotes.success} | Added ${song.name} - \`${song.formattedDuration}\` \n to the queue by \`${song.user.username}\``
+    const queueEmbed = new Discord.EmbedBuilder()
+      .setColor(0x0099ff)
+      .setTitle('Added')
+      .setThumbnail(song.thumbnail)
+      .setDescription(np)
     queue.textChannel.send(
-      `${client.emotes.success} | Added ${song.name} - \`${song.formattedDuration}\` to the queue by \`${song.user.username}\``
+      { embeds: [queueEmbed] }
     )
+
   })
   .on('addList', (queue, playlist) => {
-    queue.textChannel.send(
+    var np =
       `${client.emotes.success} | Added \`${playlist.name}\` playlist (${playlist.songs.length} songs) to queue`
+    const queueEmbed = new Discord.EmbedBuilder()
+      .setColor(0x0099ff)
+      .setTitle('Added')
+      .setThumbnail(playlist.thumbnail)
+      .setDescription(np)
+    queue.textChannel.send(
+      { embeds: [queueEmbed] }
     )
   })
   .on('error', (channel, e) => {

@@ -8,7 +8,7 @@ module.exports = {
       if (!queue) return message.channel.send(`${client.emotes.error} | There is nothing playing!`)
       let np = ''
       if (queue.songs.length > 0) {
-        np = `${queue.songs[0].name} - \`${queue.songs[0].formattedDuration}\` \n Requested by \`${queue.songs[0].user.username}\` `
+        np = `${queue.songs[0].name} - \`${queue.songs[0].formattedDuration}\` \n Requested by \`${queue.songs[0].user.username}\` \n<${queue.songs[0].url}>`
       }
       let page = 0
       let pages = 0
@@ -46,6 +46,7 @@ module.exports = {
       const queueEmbed = new Discord.EmbedBuilder()
         .setColor(0x0099ff)
         .setTitle('Now playing')
+        .setThumbnail(queue.songs[0].thumbnail)
         .setDescription(np)
         .addFields({ name: `Queue (time left: \`${formattedSumTime}\`)`, value: q })
         // .setTimestamp()
