@@ -5,7 +5,9 @@ const client = new Discord.Client({
     Discord.GatewayIntentBits.Guilds,
     Discord.GatewayIntentBits.GuildMessages,
     Discord.GatewayIntentBits.GuildVoiceStates,
-    Discord.GatewayIntentBits.MessageContent
+    Discord.GatewayIntentBits.MessageContent,
+    Discord.IntentsBitField.Flags.GuildPresences,
+    Discord.IntentsBitField.Flags.GuildMembers
   ]
 })
 const fs = require('fs')
@@ -53,6 +55,12 @@ client.on('ready', () => {
   client.user.setActivity('Praise be to ;;toromi')
 })
 
+// lazy (tea) auto role
+client.on('guildMemberAdd', member => {
+  member.roles.add(member.guild.roles.cache.find(i => i.name === config.defaultrole))
+  console.log(`auto role denpal added to ${member.user.username}`)
+})
+
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return
   const prefix = config.prefix
@@ -76,40 +84,31 @@ client.distube.setMaxListeners(2)
 
 client.distube
   .on('playSong', (queue, song) => {
-    var np = `${client.emotes.play} | \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\` \n<${song.url}>`
+    const np = `${client.emotes.play} | \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\` \n<${song.url}>`
     const queueEmbed = new Discord.EmbedBuilder()
       .setColor(0x0099ff)
       .setTitle('Playing')
       .setThumbnail(song.thumbnail)
       .setDescription(np)
-    queue.textChannel.send(
-      { embeds: [queueEmbed] }
-    )
+    queue.textChannel.send({ embeds: [queueEmbed] })
   })
   .on('addSong', (queue, song) => {
-    var np =
-      `${client.emotes.success} | Added ${song.name} - \`${song.formattedDuration}\` \n to the queue by \`${song.user.username}\``
+    const np = `${client.emotes.success} | Added ${song.name} - \`${song.formattedDuration}\` \n to the queue by \`${song.user.username}\``
     const queueEmbed = new Discord.EmbedBuilder()
       .setColor(0x0099ff)
       .setTitle('Added')
       .setThumbnail(song.thumbnail)
       .setDescription(np)
-    queue.textChannel.send(
-      { embeds: [queueEmbed] }
-    )
-
+    queue.textChannel.send({ embeds: [queueEmbed] })
   })
   .on('addList', (queue, playlist) => {
-    var np =
-      `${client.emotes.success} | Added \`${playlist.name}\` playlist (${playlist.songs.length} songs) to queue`
+    const np = `${client.emotes.success} | Added \`${playlist.name}\` playlist (${playlist.songs.length} songs) to queue`
     const queueEmbed = new Discord.EmbedBuilder()
       .setColor(0x0099ff)
       .setTitle('Added')
       .setThumbnail(playlist.thumbnail)
       .setDescription(np)
-    queue.textChannel.send(
-      { embeds: [queueEmbed] }
-    )
+    queue.textChannel.send({ embeds: [queueEmbed] })
   })
   .on('error', (channel, e) => {
     if (channel) channel.send(`${client.emotes.error} | An error encountered: ${e.toString().slice(0, 1974)}`)
@@ -122,7 +121,7 @@ client.distube
   .on('finish', queue => queue.textChannel.send('Finished!'))
 
 class DenpartyTracker {
-  constructor() {
+  constructor () {
     this.playlists = new Map()
     this.markers = new Map()
     this._backupDelta = 5
@@ -147,12 +146,12 @@ class DenpartyTracker {
     })
   }
 
-  getMessageById(guildId, messageId) {
+  getMessageById (guildId, messageId) {
     const target = (this.playlists.get(guildId) ?? []).filter(datum => datum.messageId === messageId)
     return target[0] ?? null
   }
 
-  getOrInsertMarker(guildId) {
+  getOrInsertMarker (guildId) {
     if (!this.markers.get(guildId)) {
       // Determine most recent unplayed song
       const songs = this.getOrGeneratePlaylistId(guildId)
@@ -166,7 +165,7 @@ class DenpartyTracker {
     return this.markers.get(guildId)
   }
 
-  setMarker(guildId, messageId) {
+  setMarker (guildId, messageId) {
     const target = this.getMessageById(guildId, messageId)
     if (!target) {
       throw new Error('Incorrect message ID or guild ID')
@@ -175,21 +174,21 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrGeneratePlaylistId(guildId) {
+  getOrGeneratePlaylistId (guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
     return this.playlists.get(guildId)
   }
 
-  getRecord(song) {
+  getRecord (song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
     return result[0] ?? null
   }
 
-  onSongPlayed(song) {
+  onSongPlayed (song) {
     const target = this.getRecord(song)
     if (!target) {
       throw new Error('A song that had not been recorded was played...')
@@ -198,11 +197,11 @@ class DenpartyTracker {
     target.wasPlayed = true
   }
 
-  getDenpartyLength(guildId) {
+  getDenpartyLength (guildId) {
     return this.getOrGeneratePlaylistId(guildId).length
   }
 
-  record(song) {
+  record (song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     if (target.length && this.getRecord(song)) return
 
@@ -225,7 +224,7 @@ class DenpartyTracker {
     return datum
   }
 
-  recordPlaylist(playlist) {
+  recordPlaylist (playlist) {
     if (playlist.songs.length < 1) return
 
     const guildId = playlist.songs[0].metadata.guildId
@@ -247,7 +246,7 @@ class DenpartyTracker {
     this.dumpStateFull(guildId)
   }
 
-  filterDuplicates(guildId) {
+  filterDuplicates (guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
     const currDenpartyMarker = this.getOrInsertMarker(guildId)
     const denpartySongs = target.filter(datum => datum.timestamp >= currDenpartyMarker)
@@ -260,7 +259,7 @@ class DenpartyTracker {
     this.playlists.set(guildId, [...prevDenpartySongs, ...dupelessDenpartySong])
   }
 
-  async dumpStateFull(guildId) {
+  async dumpStateFull (guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
 
     const fhandle = await fsPromises.open(`./backups/denparty_${guildId}.json`, 'w')
@@ -268,7 +267,7 @@ class DenpartyTracker {
     await fhandle.close()
   }
 
-  async dumpStatePartial(guildId) {
+  async dumpStatePartial (guildId) {
     const fullTarget = this.getOrGeneratePlaylistId(guildId)
     const marker = this.getOrInsertMarker(guildId)
 
