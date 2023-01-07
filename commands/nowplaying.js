@@ -1,4 +1,6 @@
 const Discord = require('discord.js')
+const Util = require('../classes/utils.js')
+
 module.exports = {
   name: 'nowplaying',
   aliases: ['np'],
@@ -10,9 +12,11 @@ module.exports = {
 
     const firstSong = queue.songs[0]
     const isQueueRestored = !!firstSong.metadata?.fromRestoredQueue
-    const requester = isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
+    const requester = Util.sanitizeDiscordString(
+      isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
+    )
 
-    const np = `${client.emotes.play} | I'm playing **\`${song.name}\`**, \n
+    const np = `${client.emotes.play} | I'm playing **\`${Util.sanitizeDiscordString(song.name)}\`**, \n
     Requested by \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
     <${song.url}>`
 

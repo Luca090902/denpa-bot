@@ -1,4 +1,6 @@
 const Discord = require('discord.js')
+const Util = require('../classes/utils.js')
+
 module.exports = {
   name: 'queue',
   aliases: ['q'],
@@ -10,9 +12,11 @@ module.exports = {
       if (queue.songs.length > 0) {
         const firstSong = queue.songs[0]
         const isQueueRestored = !!firstSong.metadata?.fromRestoredQueue
-        const requester = isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
+        const requester = Util.sanitizeDiscordString(
+          isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
+        )
 
-        np = `${firstSong.name.replace('~~', '\\~~')} - \`${firstSong.formattedDuration}\` \n
+        np = `${Util.sanitizeDiscordString(firstSong.name)} - \`${firstSong.formattedDuration}\` \n
         Requested by \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
         <${firstSong.url}>`
       }
@@ -29,8 +33,8 @@ module.exports = {
       let q = queue.songs
         .slice(1 + page * 10, 1 + (page + 1) * 10)
         .map((song, i) => {
-          const requester = song.metadata?.actualRequester ?? song.user.username
-          return `${page * 10 + i + 1}. ${song.name.replace('~~', '\\~~')} - \`${
+          const requester = Util.sanitizeDiscordString(song.metadata?.actualRequester ?? song.user.username)
+          return `${page * 10 + i + 1}. ${Util.sanitizeDiscordString(song.name)} - \`${
             song.formattedDuration
           }\` \`${requester}\``
         })
@@ -61,7 +65,7 @@ module.exports = {
         .setDescription(np)
         .addFields({ name: `Queue (time left: \`${formattedSumTime}\`)`, value: q })
         // .setTimestamp()
-        .setFooter({ text: `Page: ${page + 1} of ${pages}` })
+        .setFooter({ text: `Page: ${page + 1} of ${pages}\n${queue.songs.length - 1} songs in queue` })
 
       message.channel.send({ embeds: [queueEmbed] })
     } catch (e) {
