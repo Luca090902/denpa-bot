@@ -80,7 +80,7 @@ client.on('messageCreate', async message => {
   }
 })
 
-client.distube.setMaxListeners(2)
+client.distube.setMaxListeners(3)
 
 client.distube
   .on('playSong', (queue, song) => {
@@ -310,10 +310,42 @@ class DenpartyTracker {
 }
 const denpartyTracker = new DenpartyTracker()
 
+async function backupQueue (guildId) {
+  const queue = client.distube.getQueue(guildId)
+  if (!queue) {
+    return
+  }
+
+  const songData = queue.songs.map(song => {
+    return {
+      url: song.url,
+      requester: song.member.user.username
+    }
+  })
+
+  const fhandle = await fsPromises.open(`./backups/queue_${guildId}.json`, 'w')
+  await fhandle.writeFile(JSON.stringify(songData), { encoding: 'utf-8' })
+  await fhandle.close()
+}
+
+async function loadQueueBackup (guildId) {
+  try {
+    const fhandle = await fsPromises.open(`./backups/queue_${guildId}.json`, 'r')
+    const data = await fhandle.readFile('utf-8')
+    await fhandle.close()
+    return JSON.parse(data)
+  } catch (err) {
+    return null
+  }
+}
+
 client.distube
   .on('playSong', (_, song) => denpartyTracker.onSongPlayed(song))
+  .on('playSong', (_, song) => backupQueue(song.metadata.guildId))
   .on('addSong', (_, song) => denpartyTracker.record(song))
+  .on('addSong', (_, song) => backupQueue(song.metadata.guildId))
   .on('addList', (_, playlist) => denpartyTracker.recordPlaylist(playlist))
+  .on('addList', (_, playlist) => backupQueue(playlist.songs[0]?.metadata?.guildId))
   .on('denpartyGetMarker', channel => {
     const marker = denpartyTracker.getOrInsertMarker(channel.guildId)
     channel.send(`${client.emotes.denpabot} | Current denparty start time is set to <t:${Math.floor(marker / 1000)}:f>`)
@@ -370,16 +402,16 @@ client.distube
       return channel.send(`${client.emotes.error} | Queue must be empty to try to restore it...`)
     }
 
-    const unplayedSongs = denpartyTracker.getStillUnplayedSongs(guildId)
-    if (!unplayedSongs.length) {
-      return channel.send(`${client.emotes.error} | Nothing to restore with.`)
+    const queueBackup = await loadQueueBackup(guildId)
+    if (!queueBackup?.length) {
+      return channel.send(`${client.emotes.error} | Nothing to restore :(`)
     }
 
-    const unplayedSongsUrls = unplayedSongs.map(entry => entry.url)
+    const queueUrls = queueBackup.map(entry => entry.url)
 
-    channel.send(`${client.emotes.denpabot} | Trying to restore the queue of ${unplayedSongsUrls.length} songs...`)
+    channel.send(`${client.emotes.denpabot} | Trying to restore the queue of ${queueUrls.length} songs...`)
 
-    const queuePlaylist = await client.distube.createCustomPlaylist(unplayedSongsUrls, { member })
+    const queuePlaylist = await client.distube.createCustomPlaylist(queueUrls, { member })
 
     // Temporarily disable the tracker
     await denpartyTracker.whileDisabledContext(guildId, async () => {
@@ -395,18 +427,18 @@ client.distube
 
     // Perform black fucking magic to restore requesters
     const songLookup = new Map()
-    for (const entry of unplayedSongs) {
-      songLookup.set(entry.url, entry)
+    for (const entry of queueBackup) {
+      songLookup.set(entry.url, entry.requester)
     }
 
     queue = client.distube.getQueue(guildId)
     for (const song of queue.songs) {
-      const entry = songLookup.get(song.url)
+      const actualRequester = songLookup.get(song.url)
 
       song.metadata = {
         ...song.metadata,
         fromRestoredQueue: true,
-        actualRequester: entry.caused_by
+        actualRequester
       }
     }
   })
