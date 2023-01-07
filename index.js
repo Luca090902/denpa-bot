@@ -58,7 +58,7 @@ client.on('ready', () => {
 // lazy (tea) auto role
 client.on('guildMemberAdd', member => {
   member.roles.add(member.guild.roles.cache.find(i => i.name === config.defaultrole))
-  console.log(`auto role denpal added to ${member.user.username}`)
+  console.log(`auto role ${config.defaultrole} added to ${member.user.username}`)
 })
 
 client.on('messageCreate', async message => {
