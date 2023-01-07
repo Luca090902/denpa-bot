@@ -124,7 +124,7 @@ class DenpartyTracker {
   constructor () {
     this.playlists = new Map()
     this.markers = new Map()
-    this._backupDelta = 5
+    this.disabledAt = new Set()
 
     // Restore the state from denparty_GID.json when shit goes tits up
     fs.readdir('./backups/', (err, files) => {
@@ -181,6 +181,15 @@ class DenpartyTracker {
     return this.playlists.get(guildId)
   }
 
+  getStillUnplayedSongs (guildId) {
+    const target = this.getOrGeneratePlaylistId(guildId)
+    // Attempt to find the last played song
+    const lastPlayedIndex = target.findLastIndex(entry => entry.wasPlayed)
+    // We assume that we haven't fully finished listening to last song
+    //  every song afterwards is either skipped or unplayed
+    return target.slice(lastPlayedIndex)
+  }
+
   getRecord (song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
@@ -195,6 +204,7 @@ class DenpartyTracker {
     }
 
     target.wasPlayed = true
+    this.dumpStateFull(song.metadata.guildId)
   }
 
   getDenpartyLength (guildId) {
@@ -202,6 +212,10 @@ class DenpartyTracker {
   }
 
   record (song) {
+    if (this.disabledAt.has(song.metadata.guildId)) {
+      return
+    }
+
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     if (target.length && this.getRecord(song)) return
 
@@ -216,10 +230,8 @@ class DenpartyTracker {
       playlist: null
     }
     target.push(datum)
-    // Make sure to keep state backups
-    if (this.getDenpartyLength(song.metadata.guildId) % this._backupDelta === 0) {
-      this.dumpStateFull(song.metadata.guildId)
-    }
+
+    this.dumpStateFull(song.metadata.guildId)
 
     return datum
   }
@@ -229,8 +241,12 @@ class DenpartyTracker {
 
     const guildId = playlist.songs[0].metadata.guildId
 
+    if (this.disabledAt.has(guildId)) {
+      return
+    }
+
     playlist.songs.forEach(song =>
-      this.getOrGeneratePlaylistId(song.metadata.guildId).push({
+      this.getOrGeneratePlaylistId(guildId).push({
         url: song.url,
         queued: song.name,
         video_id: song.id,
@@ -242,7 +258,6 @@ class DenpartyTracker {
       })
     )
 
-    // Always dump state after playlist addition 'cos why not
     this.dumpStateFull(guildId)
   }
 
@@ -262,8 +277,13 @@ class DenpartyTracker {
   async dumpStateFull (guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
 
+    // Specifically done at this point to prevent data corruption
+    //  in case of an error in JSON.stringify
+    // Do NOT inline
+    const data = JSON.stringify(target)
+
     const fhandle = await fsPromises.open(`./backups/denparty_${guildId}.json`, 'w')
-    await fhandle.writeFile(JSON.stringify(target), { encoding: 'utf-8' })
+    await fhandle.writeFile(data, { encoding: 'utf-8' })
     await fhandle.close()
   }
 
@@ -272,9 +292,20 @@ class DenpartyTracker {
     const marker = this.getOrInsertMarker(guildId)
 
     const target = fullTarget.filter(datum => datum.timestamp >= marker)
+    // Specifically done at this point to prevent data corruption
+    //  in case of an error in JSON.stringify
+    // Do NOT inline
+    const data = JSON.stringify(target)
+
     const fhandle = await fsPromises.open(`./backups/denparty_${guildId}_request.json`, 'w')
-    await fhandle.writeFile(JSON.stringify(target), { encoding: 'utf-8' })
+    await fhandle.writeFile(data, { encoding: 'utf-8' })
     await fhandle.close()
+  }
+
+  async whileDisabledContext (guildId, code) {
+    this.disabledAt.add(guildId)
+    await code()
+    this.disabledAt.delete(guildId)
   }
 }
 const denpartyTracker = new DenpartyTracker()
@@ -330,6 +361,54 @@ client.distube
         channel.guildId
       )} unique songs in the playlist.`
     )
+  })
+  .on('denpaNeverDies', async (channel, member, message) => {
+    const guildId = channel.guildId
+    let queue = client.distube.getQueue(guildId)
+
+    if (queue && queue.songs.length) {
+      return channel.send(`${client.emotes.error} | Queue must be empty to try to restore it...`)
+    }
+
+    const unplayedSongs = denpartyTracker.getStillUnplayedSongs(guildId)
+    if (!unplayedSongs.length) {
+      return channel.send(`${client.emotes.error} | Nothing to restore with.`)
+    }
+
+    const unplayedSongsUrls = unplayedSongs.map(entry => entry.url)
+
+    channel.send(`${client.emotes.denpabot} | Trying to restore the queue of ${unplayedSongsUrls.length} songs...`)
+
+    const queuePlaylist = await client.distube.createCustomPlaylist(unplayedSongsUrls, { member })
+
+    // Temporarily disable the tracker
+    await denpartyTracker.whileDisabledContext(guildId, async () => {
+      await client.distube.play(member.voice.channel, queuePlaylist, {
+        textChannel: channel,
+        metadata: message,
+        member,
+        message
+      })
+    })
+
+    channel.send(`${client.emotes.denpabot} | Queue restored with ${queuePlaylist.songs.length} songs!`)
+
+    // Perform black fucking magic to restore requesters
+    const songLookup = new Map()
+    for (const entry of unplayedSongs) {
+      songLookup.set(entry.url, entry)
+    }
+
+    queue = client.distube.getQueue(guildId)
+    for (const song of queue.songs) {
+      const entry = songLookup.get(song.url)
+
+      song.metadata = {
+        ...song.metadata,
+        fromRestoredQueue: true,
+        actualRequester: entry.caused_by
+      }
+    }
   })
 
 client.login(config.token)

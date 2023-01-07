@@ -8,9 +8,13 @@ module.exports = {
       if (!queue) return message.channel.send(`${client.emotes.error} | There is nothing playing!`)
       let np = ''
       if (queue.songs.length > 0) {
-        np = `${queue.songs[0].name.replace('~~', '\\~~')} - \`${
-          queue.songs[0].formattedDuration
-        }\` \n Requested by \`${queue.songs[0].user.username}\` \n<${queue.songs[0].url}>`
+        const firstSong = queue.songs[0]
+        const isQueueRestored = !!firstSong.metadata?.fromRestoredQueue
+        const requester = isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
+
+        np = `${firstSong.name.replace('~~', '\\~~')} - \`${firstSong.formattedDuration}\` \n
+        Requested by \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
+        <${firstSong.url}>`
       }
       let page = 0
       let pages = 0
@@ -24,12 +28,12 @@ module.exports = {
       if (page >= pages) page = pages - 1
       let q = queue.songs
         .slice(1 + page * 10, 1 + (page + 1) * 10)
-        .map(
-          (song, i) =>
-            `${page * 10 + i + 1}. ${song.name.replace('~~', '\\~~')} - \`${song.formattedDuration}\` \`${
-              song.user.username
-            }\``
-        )
+        .map((song, i) => {
+          const requester = song.metadata?.actualRequester ?? song.user.username
+          return `${page * 10 + i + 1}. ${song.name.replace('~~', '\\~~')} - \`${
+            song.formattedDuration
+          }\` \`${requester}\``
+        })
         .join('\n')
 
       // calculate total time remaining string

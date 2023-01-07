@@ -7,7 +7,14 @@ module.exports = {
     const queue = client.distube.getQueue(message)
     if (!queue) return message.channel.send(`${client.emotes.error} | There is nothing in the queue right now!`)
     const song = queue.songs[0]
-    var np = `${client.emotes.play} | I'm playing **\`${song.name}\`**, \n Requested by \`${song.user.username}\` \n <${song.url}>`;
+
+    const firstSong = queue.songs[0]
+    const isQueueRestored = !!firstSong.metadata?.fromRestoredQueue
+    const requester = isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
+
+    const np = `${client.emotes.play} | I'm playing **\`${song.name}\`**, \n
+    Requested by \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
+    <${song.url}>`
 
     const queueEmbed = new Discord.EmbedBuilder()
       .setColor(0x0099ff)
@@ -16,6 +23,5 @@ module.exports = {
       .setDescription(np)
 
     message.channel.send({ embeds: [queueEmbed] })
-
   }
 }
