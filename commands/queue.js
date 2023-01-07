@@ -1,4 +1,6 @@
 const Discord = require('discord.js')
+const Util = require('../classes/utils.js')
+
 module.exports = {
   name: 'queue',
   aliases: ['q'],
@@ -8,7 +10,7 @@ module.exports = {
       if (!queue) return message.channel.send(`${client.emotes.error} | There is nothing playing!`)
       let np = ''
       if (queue.songs.length > 0) {
-        np = `${queue.songs[0].name.replace('~~', '\\~~')} - \`${
+        np = `${Util.sanitizeDiscordString(queue.songs[0].name)} - \`${
           queue.songs[0].formattedDuration
         }\` \n Requested by \`${queue.songs[0].user.username}\` \n<${queue.songs[0].url}>`
       }
@@ -26,7 +28,7 @@ module.exports = {
         .slice(1 + page * 10, 1 + (page + 1) * 10)
         .map(
           (song, i) =>
-            `${page * 10 + i + 1}. ${song.name.replace('~~', '\\~~')} - \`${song.formattedDuration}\` \`${
+            `${page * 10 + i + 1}. ${Util.sanitizeDiscordString(song.name)} - \`${song.formattedDuration}\` \`${
               song.user.username
             }\``
         )
@@ -57,7 +59,7 @@ module.exports = {
         .setDescription(np)
         .addFields({ name: `Queue (time left: \`${formattedSumTime}\`)`, value: q })
         // .setTimestamp()
-        .setFooter({ text: `Page: ${page + 1} of ${pages}` })
+        .setFooter({ text: `Page: ${page + 1} of ${pages}\n${queue.songs.length - 1} songs in queue` })
 
       message.channel.send({ embeds: [queueEmbed] })
     } catch (e) {
