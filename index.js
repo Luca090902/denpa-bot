@@ -323,8 +323,9 @@ async function backupQueue (guildId) {
     }
   })
 
+  const data = JSON.stringify(songData)
   const fhandle = await fsPromises.open(`./backups/queue_${guildId}.json`, 'w')
-  await fhandle.writeFile(JSON.stringify(songData), { encoding: 'utf-8' })
+  await fhandle.writeFile(data, { encoding: 'utf-8' })
   await fhandle.close()
 }
 
