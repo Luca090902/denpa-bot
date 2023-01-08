@@ -181,15 +181,6 @@ class DenpartyTracker {
     return this.playlists.get(guildId)
   }
 
-  getStillUnplayedSongs (guildId) {
-    const target = this.getOrGeneratePlaylistId(guildId)
-    // Attempt to find the last played song
-    const lastPlayedIndex = target.findLastIndex(entry => entry.wasPlayed)
-    // We assume that we haven't fully finished listening to last song
-    //  every song afterwards is either skipped or unplayed
-    return target.slice(lastPlayedIndex)
-  }
-
   getRecord (song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
@@ -198,6 +189,10 @@ class DenpartyTracker {
   }
 
   onSongPlayed (song) {
+    if (this.disabledAt.has(song.metadata.guildId)) {
+      return
+    }
+
     const target = this.getRecord(song)
     if (!target) {
       throw new Error('A song that had not been recorded was played...')
