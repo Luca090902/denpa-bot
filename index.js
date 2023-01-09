@@ -18,6 +18,7 @@ const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
 const dmpconfig = require('./dmpconfig.json')
+const Util = require('./classes/utils.js')
 
 client.config = require('./config.json')
 const { TOKEN } = process.env
@@ -86,7 +87,11 @@ client.distube.setMaxListeners(3)
 
 client.distube
   .on('playSong', (queue, song) => {
-    const np = `${client.emotes.play} | \`${song.name}\` - \`${song.formattedDuration}\`\nRequested by: \`${song.user.username}\` \n<${song.url}>`
+    const isQueueRestored = !!song.metadata?.fromRestoredQueue
+    const requester = Util.sanitizeDiscordString(isQueueRestored ? song.metadata.actualRequester : song.user.username)
+    const np = `${client.emotes.play} | \`${song.name}\` - \`${song.formattedDuration}\`\n
+    Requested by: \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
+    <${song.url}>`
     const queueEmbed = new Discord.EmbedBuilder()
       .setColor(0x0099ff)
       .setTitle('Playing')
@@ -279,9 +284,11 @@ class DenpartyTracker {
     // Do NOT inline
     const data = JSON.stringify(target)
 
-    const fhandle = await fsPromises.open(`./backups/denparty_${guildId}.json`, 'w')
-    await fhandle.writeFile(data, { encoding: 'utf-8' })
-    await fhandle.close()
+    // Make sure to globally lock the main thread because
+    //   if a bot crashes while awaiting
+    //   it sometimes appears to fail to properly flush the write buffer
+    //   causing corruption of the file?
+    fs.writeFileSync(`./backups/denparty_${guildId}.json`, data, { encoding: 'utf-8' })
   }
 
   async dumpStatePartial (guildId) {
@@ -321,9 +328,7 @@ async function backupQueue (guildId) {
   })
 
   const data = JSON.stringify(songData)
-  const fhandle = await fsPromises.open(`./backups/queue_${guildId}.json`, 'w')
-  await fhandle.writeFile(data, { encoding: 'utf-8' })
-  await fhandle.close()
+  fs.writeFileSync(`./backups/queue_${guildId}.json`, data, { encoding: 'utf-8' })
 }
 
 async function loadQueueBackup (guildId) {

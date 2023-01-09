@@ -16,8 +16,10 @@ module.exports = {
       isQueueRestored ? firstSong.metadata.actualRequester : firstSong.user.username
     )
 
-    const np = `${client.emotes.play} | I'm playing **\`${Util.sanitizeDiscordString(song.name)}\`**, \n
-    Requested by \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
+    const np = `${client.emotes.play} | I'm playing **\`${Util.sanitizeDiscordString(song.name)}\`** [${
+      queue.formattedCurrentTime
+    }/ ${song.formattedDuration}]\n
+    Requested by \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''} \n
     <${song.url}>`
 
     const queueEmbed = new Discord.EmbedBuilder()
