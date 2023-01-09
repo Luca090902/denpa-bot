@@ -1,5 +1,6 @@
 const { DisTube } = require('distube')
 const Discord = require('discord.js')
+
 const client = new Discord.Client({
   intents: [
     Discord.GatewayIntentBits.Guilds,
@@ -16,6 +17,7 @@ const config = require('./config.json')
 const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
+const dmpconfig = require('./dmpconfig.json')
 const Util = require('./classes/utils.js')
 
 client.config = require('./config.json')
@@ -58,8 +60,8 @@ client.on('ready', () => {
 
 // lazy (tea) auto role
 client.on('guildMemberAdd', member => {
-  member.roles.add(member.guild.roles.cache.find(i => i.name === config.defaultrole))
-  console.log(`auto role ${config.defaultrole} added to ${member.user.username}`)
+  member.roles.add(member.guild.roles.cache.find(i => i.name === dmpconfig.defaultrole))
+  console.log(`auto role ${dmpconfig.defaultrole} added to ${member.user.username}`)
 })
 
 client.on('messageCreate', async message => {
