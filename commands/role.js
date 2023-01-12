@@ -28,13 +28,13 @@ module.exports = {
             const hasPermissions = message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator)
               || message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles)
 
-            if (!hasPermissions) {
-              msg = `${client.emotes.error} | Not allowed`
+            if (roleSelected === "bl" || roleSelected === "blacklist") {
+              msg = Dmpcfg.roleblacklist.map(role => `${role}`).join(', ')
               break
             }
 
-            if (roleSelected === "bl" || roleSelected === "blacklist") {
-              msg = Dmpcfg.roleblacklist.map(role => `${role}`).join(', ')
+            if (!hasPermissions) {
+              msg = `${client.emotes.error} | Not allowed`
               break
             }
 
