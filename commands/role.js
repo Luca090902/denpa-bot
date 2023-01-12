@@ -28,7 +28,7 @@ module.exports = {
 
             // Anti-IDoApologise measure
             if (Dmpcfg.roleblacklist.includes(found.name)) {
-              msg`${client.emotes.error} | Not allowed`
+              msg = `${client.emotes.error} | Not allowed`
               break
             }
 
@@ -112,7 +112,7 @@ module.exports = {
 
       message.channel.send({ embeds: [queueEmbed] })
     } catch (e) {
-      message.channel.send(`${client.emotes.error} | Frequency out of range: ${e}`)
+      message.channel.send(`${client.emotes.error} | Frequency out of range`)
     }
   }
 }
