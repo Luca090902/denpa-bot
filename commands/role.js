@@ -7,10 +7,17 @@ module.exports = {
   aliases: ['broadcast', 'syntonize', 'roles'],
   run: async (client, message, args) => {
     try {
+      const hasPermissions = message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator)
+        || message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles);
+
       let msg = ''
       if (args.length === 0) {
         // No args, list
-        msg = message.guild.roles.cache.map(role => `${role.name}`).join(', ')
+
+        let roles = message.guild.roles.cache.map(role => role.name);
+        roles = (!hasPermissions) ? roles.filter(name => !Dmpcfg.roleblacklist.includes(name)) : roles;
+
+        msg = roles.join(", ")
       } else if (args.length > 0) {
         const roleSelected = args.length > 1 ? args.splice(1, args.length).join(' ') : args.join(' ')
 
@@ -32,9 +39,6 @@ module.exports = {
 
           case 'blacklist':
           case 'bl': {
-            const hasPermissions = message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator)
-              || message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles)
-
             if (roleSelected === "bl" || roleSelected === "blacklist") {
               msg = Dmpcfg.roleblacklist.map(role => `${role}`).join(', ')
               break
@@ -64,9 +68,6 @@ module.exports = {
 
           case 'unblacklist':
           case 'unbl': {
-            const hasPermissions = message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator)
-              || message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles)
-
             if (!hasPermissions) {
               msg = `${client.emotes.error} | Not allowed`
               break;
