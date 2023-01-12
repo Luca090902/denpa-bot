@@ -14,10 +14,17 @@ module.exports = {
       } else if (args.length > 0) {
         const roleSelected = args.length > 1 ? args.splice(1, args.length).join(' ') : args.join(' ')
 
+        // https://stackoverflow.com/questions/40999025/javascript-scope-variable-to-switch-case (lmao)
         switch (args[0]) {
           case 'remove': {
-            // https://stackoverflow.com/questions/40999025/javascript-scope-variable-to-switch-case (lmao)
             const found = findRole(message.member.guild.roles, roleSelected)
+
+            // Anti-IDoApologise measure
+            if (Dmpcfg.roleblacklist.includes(found.name)) {
+              msg`${client.emotes.error} | Not allowed`
+              break
+            }
+
             await message.member.roles.remove(found)
 
             msg = `${client.emotes.denpabot} | ${message.member.user.username} is no longer in tune with ${found.name}`
