@@ -60,7 +60,7 @@ client.on('ready', () => {
 
 // join a guild
 client.on('guildCreate', guild => {
-  const EXPECTED_GUILD_ID = process.env.GUILD_ID
+  const EXPECTED_GUILD_ID = config.guild_id ?? process.env.GUILD_ID
   console.log(`Guild: Joined ${guild.name}`)
 
   if (EXPECTED_GUILD_ID) {
