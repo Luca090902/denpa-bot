@@ -58,6 +58,19 @@ client.on('ready', () => {
   client.user.setActivity('Praise be to ;;toromi')
 })
 
+// join a guild
+client.on('guildCreate', guild => {
+  const EXPECTED_GUILD_ID = process.env.GUILD_ID
+  console.log(`Guild: Joined ${guild.name}`)
+
+  if (EXPECTED_GUILD_ID) {
+    if (EXPECTED_GUILD_ID !== guild.id) {
+      console.warn(`Guild: Did not expect to join ${guild.name}. Leaving...`)
+      guild.leave()
+    }
+  }
+})
+
 // lazy (tea) auto role
 client.on('guildMemberAdd', member => {
   member.roles.add(member.guild.roles.cache.find(i => i.name === dmpconfig.defaultrole))
