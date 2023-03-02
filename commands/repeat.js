@@ -5,17 +5,17 @@ module.exports = {
   run: async (client, message, args) => {
     const queue = client.distube.getQueue(message)
     if (!queue) return message.channel.send(`${client.emotes.error} | There is nothing playing!`)
-    let mode = null;
+    let mode = null
     switch (args[0]) {
       case 'off':
         mode = 0
         break
+      case 'queue':
+        mode = 2
+        break
       case 'song':
       default:
         mode = 1
-        break
-      case 'queue':
-        mode = 2
         break
     }
     mode = queue.setRepeatMode(mode)
