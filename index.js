@@ -22,7 +22,6 @@ const config = require('./config.json')
 const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
-const dmpconfig = require('./backups/dmpconfig.json')
 const Util = require('./classes/utils.js')
 
 client.config = require('./config.json')
@@ -76,8 +75,8 @@ client.on('guildCreate', guild => {
 
 // lazy (tea) auto role
 client.on('guildMemberAdd', member => {
-  member.roles.add(member.guild.roles.cache.find(i => i.name === dmpconfig.defaultrole))
-  console.log(`auto role ${dmpconfig.defaultrole} added to ${member.user.username}`)
+  member.roles.add(member.guild.roles.cache.find(i => i.name === config.defaultrole))
+  console.log(`auto role ${config.defaultrole} added to ${member.user.username}`)
 })
 
 // Wood
