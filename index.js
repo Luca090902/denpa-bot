@@ -17,7 +17,7 @@ const config = require('./config.json')
 const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
-const dmpconfig = require('./dmpconfig.json')
+const dmpconfig = require('./backups/dmpconfig.json')
 const Util = require('./classes/utils.js')
 
 client.config = require('./config.json')

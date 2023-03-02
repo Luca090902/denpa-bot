@@ -1,4 +1,4 @@
-const config = require('./../dmpconfig.json')
+const config = require('../backups/dmpconfig.json')
 const ytfps = require('ytfps')
 module.exports = {
   name: 'toromi',

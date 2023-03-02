@@ -1,7 +1,7 @@
 const Discord = require('discord.js')
-const Dmpcfg = require('./../dmpconfig.json')
+const Dmpcfg = require('../backups/dmpconfig.json')
 const fs = require('fs')
-const PATH = './dmpconfig.json'
+const PATH = './backups/dmpconfig.json'
 module.exports = {
   name: 'role',
   aliases: ['broadcast', 'syntonize', 'roles'],
