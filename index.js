@@ -63,11 +63,9 @@ client.on('guildCreate', guild => {
   const EXPECTED_GUILD_ID = config.guild_id ?? process.env.GUILD_ID
   console.log(`Guild: Joined ${guild.name}`)
 
-  if (EXPECTED_GUILD_ID) {
-    if (EXPECTED_GUILD_ID !== guild.id) {
-      console.warn(`Guild: Did not expect to join ${guild.name}. Leaving...`)
-      guild.leave()
-    }
+  if (EXPECTED_GUILD_ID && EXPECTED_GUILD_ID !== guild.id) {
+    console.warn(`Guild: Did not expect to join ${guild.name}. Leaving...`)
+    guild.leave()
   }
 })
 
