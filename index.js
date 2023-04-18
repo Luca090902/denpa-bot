@@ -8,8 +8,13 @@ const client = new Discord.Client({
     Discord.GatewayIntentBits.GuildVoiceStates,
     Discord.GatewayIntentBits.MessageContent,
     Discord.IntentsBitField.Flags.GuildPresences,
-    Discord.IntentsBitField.Flags.GuildMembers
+    Discord.IntentsBitField.Flags.GuildMembers,
+    Discord.GatewayIntentBits.GuildMessageReactions
   ]
+  // partials: [
+  //   Partials.Message,
+  //   Partials.Channel,
+  //   Partials.Reaction]
 })
 const fs = require('fs')
 const fsPromises = require('fs/promises')
@@ -73,6 +78,34 @@ client.on('guildCreate', guild => {
 client.on('guildMemberAdd', member => {
   member.roles.add(member.guild.roles.cache.find(i => i.name === dmpconfig.defaultrole))
   console.log(`auto role ${dmpconfig.defaultrole} added to ${member.user.username}`)
+})
+
+// Wood
+client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
+  try {
+    await reaction.fetch()
+  } catch (error) {
+    console.error('Something went wrong when fetching the message:', error)
+    return
+  }
+  if (reaction.emoji.name === dmpconfig.woodemoji) {
+    // Send message to wood channel
+    const messageReacted = await client.channels.cache
+      .get(reaction.message.channelId)
+      .messages.fetch(reaction.message.id)
+
+    const woodcount = messageReacted.reactions.cache.get(dmpconfig.woodemoji).count
+    if (woodcount >= dmpconfig.woodthreshold) {
+      client.channels.fetch(dmpconfig.woodchannelid).then(channel => {
+        channel.send(
+          ' :shark: tbh \n' +
+            reaction.message.content +
+            '\n' +
+            (reaction.message.attachments.size > 0 ? reaction.message.attachments.first().url : '')
+        )
+      })
+    }
+  }
 })
 
 client.on('messageCreate', async message => {
