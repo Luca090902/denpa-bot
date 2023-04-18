@@ -1,5 +1,8 @@
 {
   "tplaylist": "PLb1JKHu_D4MTBXu-8MCFBJ855RpoUuYTf",
   "defaultrole": "denpanaut",
-  "roleblacklist": []
+  "roleblacklist": [],
+  "woodthreshold": "1",
+  "woodchannelid": "channel_id",
+  "woodemoji": "🪵"
 }
