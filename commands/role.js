@@ -1,19 +1,19 @@
 const Discord = require('discord.js')
 const fs = require('fs')
 
-const BLACKLIST_PATH = './backups/blacklist.json'
-
 module.exports = {
   name: 'role',
   aliases: ['broadcast', 'syntonize', 'roles'],
   run: async (client, message, args) => {
     try {
+      const blacklistPath = getBlacklistPath(message.guildId);
+
       let blacklist = []
 
       let blacklistStr
       try {
-        blacklistStr = fs.readFileSync(BLACKLIST_PATH, { encoding: 'utf-8' })
-      } catch (e) {} // it's cool if this fails
+        blacklistStr = fs.readFileSync(blacklistPath, { encoding: 'utf-8' })
+      } catch (e) { } // it's cool if this fails
 
       if (blacklistStr !== undefined) blacklist = JSON.parse(blacklistStr)
 
@@ -73,7 +73,7 @@ module.exports = {
 
                 blacklist.push(found.name)
 
-                fs.writeFileSync(BLACKLIST_PATH, JSON.stringify(blacklist))
+                fs.writeFileSync(blacklistPath, JSON.stringify(blacklist))
                 msg = `${client.emotes.denpabot} | blacklisted role ${found.name}`
               } else {
                 msg = `${client.emotes.error} | Role doesn't exist`
@@ -95,7 +95,7 @@ module.exports = {
                 if (blacklist.includes(found.name)) {
                   blacklist = blacklist.filter(e => e !== found.name)
 
-                  fs.writeFileSync(BLACKLIST_PATH, JSON.stringify(blacklist))
+                  fs.writeFileSync(blacklistPath, JSON.stringify(blacklist))
                   msg = `${client.emotes.denpabot} | unblacklisted role ${found.name}`
                 } else {
                   msg = `${client.emotes.error} | Not blacklisted`
@@ -141,4 +141,8 @@ module.exports = {
 const findRole = (roles, needle) => {
   const needleLower = needle.toLowerCase()
   return roles.cache.find(r => r.name.toLowerCase() === needleLower)
+}
+
+const getBlacklistPath = (guildId) => {
+  return `./backups/blacklist_${guildId}.json`
 }
