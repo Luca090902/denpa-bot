@@ -9,8 +9,13 @@
     "success": "☑️",
     "repeat": "🔁",
     "error": "❌",
-    "denpabot": ":satellite:"
+    "denpabot": ":satellite:",
+    "wood": "🪵"
   },
   "tplaylist": "PLb1JKHu_D4MTBXu-8MCFBJ855RpoUuYTf",
-  "defaultrole": "denpanaut"
+  "defaultrole": "denpanaut",
+  "defaultWoodConfig": {
+    "threshold": 1,
+    "channelId": "channel_id"
+  }
 }

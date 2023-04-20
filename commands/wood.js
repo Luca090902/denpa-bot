@@ -1,29 +1,49 @@
 const Discord = require('discord.js')
-const Dmpcfg = require('../backups/dmpconfig.json')
 const fs = require('fs')
-const PATH = './backups/dmpconfig.json'
+const config = require('../config.json')
+
 module.exports = {
   name: 'wood',
-  aliases: [Dmpcfg.woodemoji],
+  aliases: [config.emoji.wood],
   run: async (client, message, args) => {
+    const woodConfigPath = getWoodPath(message.guildId)
+    let woodConfig = config.defaultWoodConfig
+
+    try {
+      const configFile = fs.readFileSync(woodConfigPath, { encoding: 'utf-8' })
+      woodConfig = JSON.parse(configFile)
+    } catch (e) {} // ignore error
+
     const hasPermissions =
       message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator) ||
       message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles)
 
     if (hasPermissions && args.length > 1) {
       if (args[0] === 'set' && !isNaN(args[1]) && args[1] > 0) {
-        Dmpcfg.woodthreshold = args[1]
-        fs.writeFileSync(PATH, JSON.stringify(Dmpcfg, null, '\t'))
+        woodConfig.threshold = args[1]
+        fs.writeFileSync(woodConfigPath, JSON.stringify(woodConfig))
+
         return message.channel.send(`${client.emotes.success} | wood minimum set to ${args[1]}`)
       } else if (args[0] === 'channel') {
-        Dmpcfg.woodchannelid = args[1]
-        fs.writeFileSync(PATH, JSON.stringify(Dmpcfg, null, '\t'))
+        if (!/\d+/.test(args[1])) {
+          return message.channel.send(
+            `${client.emotes.error} | Expected a Channel ID (digits only). Received "${args[1]}"`
+          )
+        }
+
+        woodConfig.channelId = args[1]
+        fs.writeFileSync(woodConfigPath, JSON.stringify(woodConfig))
+
         return message.channel.send(`${client.emotes.success} | wood channel changed`)
       } else {
-        return message.channel.send(`wood minimum ${Dmpcfg.woodthreshold} | wood channel ${Dmpcfg.woodchannelid}.`)
+        return message.channel.send(`wood minimum ${woodConfig.threshold} | wood channel ${woodConfig.channelId}.`)
       }
     } else {
       return message.channel.send(':wood: :shark: :sob: :sob: :sob:')
     }
   }
+}
+
+const getWoodPath = guildId => {
+  return `./backups/wood_${guildId}.json`
 }
