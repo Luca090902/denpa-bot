@@ -88,12 +88,12 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
     return
   }
 
-  const woodConfigPath = `./backups/wood_${reaction.message.guildId}.json`;
-  let woodConfig = config.defaultWoodConfig;
+  const woodConfigPath = `./backups/wood_${reaction.message.guildId}.json`
+  let woodConfig = config.defaultWoodConfig
   try {
-    const configFile = fs.readFileSync(woodConfigPath, { encoding: 'utf-8' });
-    woodConfig = JSON.parse(configFile);
-  } catch (e) { } // ignore error 
+    const configFile = fs.readFileSync(woodConfigPath, { encoding: 'utf-8' })
+    woodConfig = JSON.parse(configFile)
+  } catch (e) {} // ignore error
 
   if (reaction.emoji.name === config.emoji.wood) {
     // Send message to wood channel
@@ -108,9 +108,9 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
       client.channels.fetch(woodConfig.channelId).then(channel => {
         channel.send(
           ' :shark: tbh \n' +
-          reaction.message.content +
-          '\n' +
-          (reaction.message.attachments.size > 0 ? reaction.message.attachments.first().url : '')
+            reaction.message.content +
+            '\n' +
+            (reaction.message.attachments.size > 0 ? reaction.message.attachments.first().url : '')
         )
       })
     }

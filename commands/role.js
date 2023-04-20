@@ -6,14 +6,14 @@ module.exports = {
   aliases: ['broadcast', 'syntonize', 'roles'],
   run: async (client, message, args) => {
     try {
-      const blacklistPath = getBlacklistPath(message.guildId);
+      const blacklistPath = getBlacklistPath(message.guildId)
 
       let blacklist = []
 
       let blacklistStr
       try {
         blacklistStr = fs.readFileSync(blacklistPath, { encoding: 'utf-8' })
-      } catch (e) { } // it's cool if this fails
+      } catch (e) {} // it's cool if this fails
 
       if (blacklistStr !== undefined) blacklist = JSON.parse(blacklistStr)
 
@@ -143,6 +143,6 @@ const findRole = (roles, needle) => {
   return roles.cache.find(r => r.name.toLowerCase() === needleLower)
 }
 
-const getBlacklistPath = (guildId) => {
+const getBlacklistPath = guildId => {
   return `./backups/blacklist_${guildId}.json`
 }
