@@ -100,7 +100,10 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
 
     const woodcount = messageReacted.reactions.cache.get(config.emoji.wood).count
 
-    if (woodcount >= woodConfig.threshold && !woodConfig.messages.includes(reaction.message.id)) {
+    if (woodConfig.messages.includes(reaction.message.id)) return // no duplicates in woodboard
+    if (reaction.message.channelId === woodConfig.channelId) return // messages in woodboard don't count
+
+    if (woodcount >= woodConfig.threshold) {
       client.channels.fetch(woodConfig.channelId).then(channel => {
         channel.send(
           ' :shark: tbh \n' +
