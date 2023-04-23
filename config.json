@@ -16,6 +16,7 @@
   "defaultrole": "denpanaut",
   "defaultWoodConfig": {
     "threshold": 1,
-    "channelId": "channel_id"
+    "channelId": "channel_id",
+    "messages": []
   }
 }

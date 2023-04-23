@@ -95,6 +95,10 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
     woodConfig = JSON.parse(configFile)
   } catch (e) {} // ignore error
 
+  // -- Poor Denpa Fan's Database Migrations --
+  // If an older ver. of wood.json is loaded, woodConfig.messages will be undefiend
+  if (woodConfig.messages === undefined) woodConfig.messages = []
+
   if (reaction.emoji.name === config.emoji.wood) {
     // Send message to wood channel
     const messageReacted = await client.channels.cache
@@ -103,8 +107,7 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
 
     const woodcount = messageReacted.reactions.cache.get(config.emoji.wood).count
 
-    // TODO: Fix this lol
-    if (woodcount >= woodConfig.threshold) {
+    if (woodcount >= woodConfig.threshold && !woodConfig.messages.includes(reaction.message.id)) {
       client.channels.fetch(woodConfig.channelId).then(channel => {
         channel.send(
           ' :shark: tbh \n' +
@@ -112,6 +115,10 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
             '\n' +
             (reaction.message.attachments.size > 0 ? reaction.message.attachments.first().url : '')
         )
+
+        // Update list of tracked messages + write to disk
+        woodConfig.messages.push(reaction.message.id)
+        fs.writeFileSync(woodConfigPath, JSON.stringify(woodConfig))
       })
     }
   }
