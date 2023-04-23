@@ -22,7 +22,6 @@ const config = require('./config.json')
 const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
-const dmpconfig = require('./backups/dmpconfig.json')
 const Util = require('./classes/utils.js')
 
 client.config = require('./config.json')
@@ -76,8 +75,8 @@ client.on('guildCreate', guild => {
 
 // lazy (tea) auto role
 client.on('guildMemberAdd', member => {
-  member.roles.add(member.guild.roles.cache.find(i => i.name === dmpconfig.defaultrole))
-  console.log(`auto role ${dmpconfig.defaultrole} added to ${member.user.username}`)
+  member.roles.add(member.guild.roles.cache.find(i => i.name === config.defaultrole))
+  console.log(`auto role ${config.defaultrole} added to ${member.user.username}`)
 })
 
 // Wood
@@ -88,15 +87,25 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
     console.error('Something went wrong when fetching the message:', error)
     return
   }
-  if (reaction.emoji.name === dmpconfig.woodemoji) {
+
+  const woodConfigPath = `./backups/wood_${reaction.message.guildId}.json`
+  let woodConfig = config.defaultWoodConfig
+  try {
+    const configFile = fs.readFileSync(woodConfigPath, { encoding: 'utf-8' })
+    woodConfig = JSON.parse(configFile)
+  } catch (e) {} // ignore error
+
+  if (reaction.emoji.name === config.emoji.wood) {
     // Send message to wood channel
     const messageReacted = await client.channels.cache
       .get(reaction.message.channelId)
       .messages.fetch(reaction.message.id)
 
-    const woodcount = messageReacted.reactions.cache.get(dmpconfig.woodemoji).count
-    if (woodcount >= dmpconfig.woodthreshold) {
-      client.channels.fetch(dmpconfig.woodchannelid).then(channel => {
+    const woodcount = messageReacted.reactions.cache.get(config.emoji.wood).count
+
+    // TODO: Fix this lol
+    if (woodcount >= woodConfig.threshold) {
+      client.channels.fetch(woodConfig.channelId).then(channel => {
         channel.send(
           ' :shark: tbh \n' +
             reaction.message.content +
