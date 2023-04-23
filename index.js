@@ -88,16 +88,9 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
     return
   }
 
-  const woodConfigPath = `./backups/wood_${reaction.message.guildId}.json`
-  let woodConfig = config.defaultWoodConfig
-  try {
-    const configFile = fs.readFileSync(woodConfigPath, { encoding: 'utf-8' })
-    woodConfig = JSON.parse(configFile)
-  } catch (e) {} // ignore error
-
-  // -- Poor Denpa Fan's Database Migrations --
-  // If an older ver. of wood.json is loaded, woodConfig.messages will be undefiend
-  if (woodConfig.messages === undefined) woodConfig.messages = []
+  const wood = require('./commands/wood')
+  const woodPath = wood.path(reaction.message.guildId)
+  const woodConfig = wood.config(woodPath)
 
   if (reaction.emoji.name === config.emoji.wood) {
     // Send message to wood channel
@@ -118,7 +111,7 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
 
         // Update list of tracked messages + write to disk
         woodConfig.messages.push(reaction.message.id)
-        fs.writeFileSync(woodConfigPath, JSON.stringify(woodConfig))
+        wood.save(woodPath, woodConfig)
       })
     }
   }
