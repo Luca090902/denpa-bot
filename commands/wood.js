@@ -2,17 +2,34 @@ const Discord = require('discord.js')
 const fs = require('fs')
 const config = require('../config.json')
 
+const getWoodConfig = path => {
+  let woodConfig = config.defaultWoodConfig
+
+  try {
+    const file = fs.readFileSync(path, { encoding: 'utf-8' })
+    woodConfig = JSON.parse(file)
+  } catch (e) {} // ignore error
+
+  // An older ver. of wood.json didn't have a message property, so ensure that it exists
+  if (woodConfig.messages === undefined) woodConfig.messages = []
+
+  return woodConfig
+}
+
+const saveWoodConfig = (path, woodConfig) => {
+  fs.writeFileSync(path, JSON.stringify(woodConfig))
+}
+
+const getWoodPath = guildId => {
+  return `./backups/wood_${guildId}.json`
+}
+
 module.exports = {
   name: 'wood',
   aliases: [config.emoji.wood],
   run: async (client, message, args) => {
-    const woodConfigPath = getWoodPath(message.guildId)
-    let woodConfig = config.defaultWoodConfig
-
-    try {
-      const configFile = fs.readFileSync(woodConfigPath, { encoding: 'utf-8' })
-      woodConfig = JSON.parse(configFile)
-    } catch (e) {} // ignore error
+    const woodPath = getWoodPath(message.guildId)
+    const woodConfig = getWoodConfig(woodPath)
 
     const hasPermissions =
       message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator) ||
@@ -21,7 +38,7 @@ module.exports = {
     if (hasPermissions && args.length > 1) {
       if (args[0] === 'set' && !isNaN(args[1]) && args[1] > 0) {
         woodConfig.threshold = args[1]
-        fs.writeFileSync(woodConfigPath, JSON.stringify(woodConfig))
+        saveWoodConfig(woodPath, woodConfig)
 
         return message.channel.send(`${client.emotes.success} | wood minimum set to ${args[1]}`)
       } else if (args[0] === 'channel') {
@@ -32,7 +49,7 @@ module.exports = {
         }
 
         woodConfig.channelId = args[1]
-        fs.writeFileSync(woodConfigPath, JSON.stringify(woodConfig))
+        saveWoodConfig(woodPath, woodConfig)
 
         return message.channel.send(`${client.emotes.success} | wood channel changed`)
       } else {
@@ -41,9 +58,9 @@ module.exports = {
     } else {
       return message.channel.send(':wood: :shark: :sob: :sob: :sob:')
     }
-  }
-}
+  },
 
-const getWoodPath = guildId => {
-  return `./backups/wood_${guildId}.json`
+  config: getWoodConfig,
+  path: getWoodPath,
+  save: saveWoodConfig
 }
