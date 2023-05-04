@@ -10,12 +10,10 @@ module.exports = {
 
       let blacklist = []
 
-      let blacklistStr
       try {
-        blacklistStr = fs.readFileSync(blacklistPath, { encoding: 'utf-8' })
-      } catch (e) {} // it's cool if this fails
-
-      if (blacklistStr !== undefined) blacklist = JSON.parse(blacklistStr)
+        const file = fs.readFileSync(blacklistPath, { encoding: 'utf-8' })
+        blacklist = JSON.parse(file)
+      } catch (e) {} // ignore error
 
       const hasPermissions =
         message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator) ||
