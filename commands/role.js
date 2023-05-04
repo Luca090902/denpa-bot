@@ -132,6 +132,10 @@ module.exports = {
 
       message.channel.send({ embeds: [queueEmbed] })
     } catch (e) {
+      console.error('Role Error!! TODO: Debug and remove\n')
+      console.debug(e)
+      console.trace()
+
       message.channel.send(`${client.emotes.error} | Frequency out of range`)
     }
   }
