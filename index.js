@@ -79,6 +79,9 @@ client.on('guildMemberAdd', member => {
   console.log(`auto role ${config.defaultrole} added to ${member.user.username}`)
 })
 
+// https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
+const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/g
+
 // Wood
 client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
   try {
@@ -105,12 +108,42 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
 
     if (woodcount >= woodConfig.threshold) {
       client.channels.fetch(woodConfig.channelId).then(channel => {
-        channel.send(
-          ' :shark: tbh \n' +
-            reaction.message.content +
-            '\n' +
-            (reaction.message.attachments.size > 0 ? reaction.message.attachments.first().url : '')
-        )
+        const mainEmbed = new Discord.EmbedBuilder()
+          .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
+          .setURL('https://example.com') // This is a hack to get more than one image embed
+          .setAuthor({
+            name: `${reaction.message.author.tag} | 🦈 tbh`,
+            iconURL: reaction.message.author.displayAvatarURL()
+          })
+          .setTimestamp()
+          .setFooter({ text: `ID: ${reaction.message.id}` })
+
+        // value can not be "" or null (presumably can't be falsey)
+        // so make sure not to call addFields if there is no message
+        if (reaction.message.content) mainEmbed.addFields({ name: 'Message', value: reaction.message.content })
+        mainEmbed.addFields({ name: 'Link', value: reaction.message.url })
+
+        // TODO: Confirm that URLs are indeed images before sending them off to discord?
+
+        // Discord doesn't support displaying more than one (large) image embed at the same time.
+        // HOWEVER, see this: https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
+        const hyperlinks = reaction.message.content.match(urlRegex) ?? []
+        const attachment = reaction.message.attachments.first()
+
+        if (hyperlinks.length !== 0) {
+          mainEmbed.setImage(attachment?.url ?? hyperlinks.shift())
+        } else {
+          if (attachment) mainEmbed.setImage(attachment.url)
+        }
+
+        const embeds = []
+        embeds.push(mainEmbed)
+
+        hyperlinks.forEach(hyperlink => {
+          embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
+        })
+
+        channel.send({ embeds })
 
         // Update list of tracked messages + write to disk
         woodConfig.messages.push(reaction.message.id)
