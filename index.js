@@ -153,14 +153,17 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
   }
 })
 
-const TAKE_REGEX = /take|\stook/gi
+const TAKE_REGEX = /t\W?a\W?k\W?e/i
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return
 
   if (TAKE_REGEX.test(message.content)) {
-    message.react('🎍').then(() => {
-      console.info(`reacted with 🎍 to: a message by ${message.author.tag}`)
-    })
+    message
+      .react('🎍')
+      .then(() => {
+        console.info(`reacted with 🎍 to: a message by ${message.author.tag}`)
+      })
+      .catch(e => console.error(`🎍 failed: ${e}`))
   }
 
   const prefix = config.prefix
