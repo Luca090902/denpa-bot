@@ -153,8 +153,16 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
   }
 })
 
+const TAKE_REGEX = /take|\stook/gi
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return
+
+  if (TAKE_REGEX.test(message.content)) {
+    message.react('🎍').then(() => {
+      console.info(`reacted with 🎍 to: a message by ${message.author.tag}`)
+    })
+  }
+
   const prefix = config.prefix
   if (!message.content.startsWith(prefix)) return
   const args = message.content.slice(prefix.length).trim().split(/ +/g)
