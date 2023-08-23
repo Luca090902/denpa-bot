@@ -19,7 +19,7 @@ module.exports = {
         message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator) ||
         message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles)
 
-      const roleItemsPerPage = 4
+      const roleItemsPerPage = 30
       let msg = ''
       const msgs = []
       if (args.length === 0) {
