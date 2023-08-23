@@ -19,14 +19,23 @@ module.exports = {
         message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator) ||
         message.member.permissions.has(Discord.PermissionsBitField.Flags.ManageRoles)
 
+      const roleItemsPerPage = 4
       let msg = ''
+      const msgs = []
       if (args.length === 0) {
         // No args, list
 
         let roles = message.guild.roles.cache.map(role => role.name)
         roles = !hasPermissions ? roles.filter(name => !blacklist.includes(name)) : roles
 
-        msg = roles.join(', ')
+        // msg = roles.join(', ')
+        const rolePages = Math.ceil(roles.length / roleItemsPerPage)
+
+        for (let i = 0; i < rolePages; i++) {
+          const indx = i * roleItemsPerPage
+          const rolesPag = roles.slice(indx, indx + roleItemsPerPage)
+          msgs.push(rolesPag.join(', '))
+        }
       } else if (args.length > 0) {
         const roleSelected = args.length > 1 ? args.splice(1, args.length).join(' ') : args.join(' ')
 
@@ -121,14 +130,26 @@ module.exports = {
         }
       }
 
-      const queueEmbed = new Discord.EmbedBuilder()
-        .setColor(0x0099ff)
-        // .setTitle('Roles')
-        .setDescription(' ')
-        // will sometimes fail if `msg` is an empty string (why?????)
-        .addFields({ name: 'Roles', value: msg.length === 0 ? '[Empty]' : msg })
+      if (msgs.length > 0) {
+        msgs.forEach(msg => {
+          const queueEmbed = new Discord.EmbedBuilder()
+            .setColor(0x0099ff)
+            // .setTitle('Roles')
+            .setDescription(' ')
+            // will sometimes fail if `msg` is an empty string (why?????)
+            .addFields({ name: 'Roles', value: msg.length === 0 ? '[Empty]' : msg })
+          message.channel.send({ embeds: [queueEmbed] })
+        })
+      } else {
+        const queueEmbed = new Discord.EmbedBuilder()
+          .setColor(0x0099ff)
+          // .setTitle('Roles')
+          .setDescription(' ')
+          // will sometimes fail if `msg` is an empty string (why?????)
+          .addFields({ name: 'Roles', value: msg.length === 0 ? '[Empty]' : msg })
 
-      message.channel.send({ embeds: [queueEmbed] })
+        message.channel.send({ embeds: [queueEmbed] })
+      }
     } catch (e) {
       console.error('Role Error!! TODO: Debug and remove\n')
       console.debug(e)
