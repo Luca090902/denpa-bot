@@ -46,7 +46,7 @@ module.exports = {
               const found = findRole(message.member.guild.roles, roleSelected)
 
               // Anti-IDoApologise measure
-              if (blacklist.includes(found.name)) {
+              if (blacklist.includes(found.name) || found.name.toLowerCase() === 'retard') {
                 msg = `${client.emotes.error} | Not allowed`
                 break
               }
