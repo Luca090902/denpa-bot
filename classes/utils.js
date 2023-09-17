@@ -7,6 +7,9 @@ const sanitizeDiscordString = function (text) {
   return text
 }
 
+const getUserPingString = userId => `<@${userId}>`
+
 module.exports = {
-  sanitizeDiscordString
+  sanitizeDiscordString,
+  getUserPingString
 }
