@@ -1,5 +1,6 @@
 const { getCumStats, saveCumStats } = require('../classes/cumUtils.js')
 const { getUserPingString } = require('../classes/utils.js')
+const { emoji } = require('../config.json')
 
 module.exports = {
   name: 'cum',
@@ -16,9 +17,9 @@ module.exports = {
     const cumStats = getCumStats(message.guildId)
 
     message.channel.send(
-      `Oh no! ${getUserPingString(userSender.id)} has cummed on ${getUserPingString(
-        userRecipient.id
-      )} :cat1: :UwU: :drool: :cunny:`
+      `Oh no! ${getUserPingString(userSender.id)} has cummed on ${getUserPingString(userRecipient.id)} ${emoji.cat1} ${
+        emoji.UwU
+      } :drool: ${emoji.cunny}`
     )
 
     if (userSender.id === userRecipient.id) {
