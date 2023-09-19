@@ -1,5 +1,4 @@
 const { getCumStats, getMostCommonUserData } = require('../classes/cumUtils.js')
-const { emoji } = require('../config.json')
 const Discord = require('discord.js')
 
 const cunnyPointPngUrl =
@@ -27,7 +26,7 @@ module.exports = {
     const exampleEmbed = new Discord.EmbedBuilder()
       .setColor(0xffffff)
       .setAuthor({
-        name: `${user.tag} | ${emoji.wood} ${emoji.same} tbh`,
+        name: `${user.tag} | ${client.emotes.wood} ${client.emotes.same} tbh`,
         iconURL: user.displayAvatarURL()
       })
       .setDescription("Here are this user's cum stats!")

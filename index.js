@@ -1,5 +1,6 @@
 const { DisTube } = require('distube')
 const Discord = require('discord.js')
+require('dotenv').config()
 
 const client = new Discord.Client({
   intents: [
@@ -23,6 +24,7 @@ const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
 const Util = require('./classes/utils.js')
+const { setupAutoReact } = require('./classes/autoEmoteUtils')
 
 client.config = require('./config.json')
 const { TOKEN } = process.env
@@ -153,18 +155,8 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
   }
 })
 
-const TAKE_REGEX = /t\W?a\W?k\W?e/i
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return
-
-  if (TAKE_REGEX.test(message.content)) {
-    message
-      .react('🎍')
-      .then(() => {
-        console.info(`reacted with 🎍 to: a message by ${message.author.tag}`)
-      })
-      .catch(e => console.error(`🎍 failed: ${e}`))
-  }
 
   const prefix = config.prefix
   if (!message.content.startsWith(prefix)) return
@@ -181,6 +173,12 @@ client.on('messageCreate', async message => {
     console.error(e)
     message.channel.send(`${client.emotes.error} | Error: \`${e}\``)
   }
+})
+
+// auto reacts
+client.on('messageCreate', async message => {
+  setupAutoReact(message, 'take', client.emotes.take)
+  setupAutoReact(message, 'same', client.emotes.same)
 })
 
 client.distube.setMaxListeners(3)

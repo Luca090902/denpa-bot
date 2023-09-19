@@ -1,6 +1,5 @@
 const { getCumStats, saveCumStats } = require('../classes/cumUtils.js')
 const { getUserPingString } = require('../classes/utils.js')
-const { emoji } = require('../config.json')
 
 module.exports = {
   name: 'cum',
@@ -8,28 +7,24 @@ module.exports = {
   inVoiceChannel: false,
   run: async (client, message, args) => {
     const userSender = message.author
-    if (message.mentions.users.size === 0) {
-      message.channel.send(`${getUserPingString(userSender.id)} Please specify who you want to cum on! :cat1:`)
-      return
-    }
-
-    const userRecipient = Array.from(message.mentions.users.values())[0]
+    const userRecipient = message.mentions.users.size > 0 ? Array.from(message.mentions.users.values())[0] : userSender
     const cumStats = getCumStats(message.guildId)
 
-    message.channel.send(
-      `Oh no! ${getUserPingString(userSender.id)} has cummed on ${getUserPingString(userRecipient.id)} ${emoji.cat1} ${
-        emoji.UwU
-      } :drool: ${emoji.cunny}`
-    )
-
-    if (userSender.id === userRecipient.id) {
+    if (userSender === userRecipient) {
       cumStats.totalSelfCums += 1
+      message.channel.send(
+        `Oh no! ${getUserPingString(userSender.id)} has cummed on themselves! ${client.emotes.cat1} ${
+          client.emotes.UwU
+        } :drool: ${client.emotes.cunny}`
+      )
+    } else {
+      message.channel.send(
+        `Oh no! ${getUserPingString(userSender.id)} has cummed on ${getUserPingString(userRecipient.id)}! ${
+          client.emotes.cat1
+        } ${client.emotes.UwU} :drool: ${client.emotes.cunny}`
+      )
     }
-
     cumStats.totalCums += 1
-    if (userSender.id === userRecipient.id) {
-      cumStats.totalSelfCums += 1
-    }
 
     // usersWhoCummed
     if (cumStats.usersWhoCummed[userSender.id] == null) {

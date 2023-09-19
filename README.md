@@ -17,6 +17,17 @@ Check out the [official guide](https://distube.js.org/guide) to get your music b
 4. Click "Recreate", toggle "Re-pull image", then click the red "Recreate" button.
 5. Ensure container starts correctly :)
 
+## How to develop locally?
+
+1. We use dotenv to read local env variables to our app.
+2. Simply create a `.env` (already included in .gitignore) file in the top level, then add your key like so.
+
+```
+TOKEN=<your key here>
+```
+
+3. Add your bot to your personal server, then develop as such!
+
 ## [OUTDATED] How to update docker image (and thus updating the bot)
 
 **Below is outdated, but keeping for historical purposes/quick reference :)**
