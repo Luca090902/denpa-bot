@@ -25,6 +25,7 @@ const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
 const Util = require('./classes/utils.js')
 const { setupAutoReact } = require('./classes/autoEmoteUtils')
+const { getDeleteGuardData } = require('./classes/deleteGuardUtils')
 
 client.config = require('./config.json')
 const { TOKEN } = process.env
@@ -179,6 +180,46 @@ client.on('messageCreate', async message => {
 client.on('messageCreate', async message => {
   setupAutoReact(message, 'take', client.emotes.take)
   setupAutoReact(message, 'same', client.emotes.same)
+})
+
+// deleteGuard
+client.on('messageDelete', async message => {
+  const guildId = message.guildId
+  const deleteGuardData = getDeleteGuardData(guildId)
+
+  // if in allowlist, repost message
+  if (Object.keys(deleteGuardData.users).includes(message.author.id)) {
+    const mainEmbed = new Discord.EmbedBuilder()
+      .setColor(0xecdca8) // golden color
+      .setURL('https://example.com') // This is a hack to get more than one image embed
+      .setAuthor({
+        name: `${message.author.tag}`,
+        iconURL: message.author.displayAvatarURL()
+      })
+      .setTimestamp()
+      .setFooter({ text: `ID: ${message.id}` })
+
+    // value can not be "" or null (presumably can't be falsey)
+    // so make sure not to call addFields if there is no message
+    if (message.content) {
+      mainEmbed.addFields({ name: 'Deleted Message', value: message.content })
+    }
+
+    const hyperlinks = message.content.match(urlRegex) ?? []
+    const attachment = message.attachments.first()
+
+    mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
+
+    const embeds = []
+    embeds.push(mainEmbed)
+
+    // https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
+    hyperlinks.forEach(hyperlink => {
+      embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
+    })
+
+    message.channel.send({ embeds })
+  }
 })
 
 client.distube.setMaxListeners(3)
