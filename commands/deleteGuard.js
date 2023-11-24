@@ -32,21 +32,27 @@ const setChannelIdDeleteGuard = (channelId, guildId, client, message) => {
   deleteGuardData.channelId = channelId
   saveDeleteGuardData(guildId, deleteGuardData)
 
-  client.channels.fetch(channelId).then(channel => {
-    message.channel.send(`#${channel.name} set successfully.`)
-  })
+  client.channels
+    .fetch(channelId)
+    .then(channel => {
+      message.channel.send(`#${channel.name} set successfully.`)
+    })
+    .catch(() => message.channel.send('Error in setting channel.'))
 }
 
 const listDeleteGuard = async (user, guildId, client, message) => {
   const deleteGuardData = getDeleteGuardData(guildId)
-  const channel = await client.channels.fetch(deleteGuardData.channelId)
+  const channel = await client.channels.fetch(deleteGuardData.channelId).catch(() => {})
 
   const userIds = []
   await Promise.all(
     deleteGuardData.users.map(async userId => {
-      client.users.fetch(userId).then(user => {
-        userIds.push(`${user.username} (${userId})`)
-      })
+      client.users
+        .fetch(userId)
+        .then(user => {
+          userIds.push(`${user.username} (${userId})`)
+        })
+        .catch(() => {})
     })
   )
 
