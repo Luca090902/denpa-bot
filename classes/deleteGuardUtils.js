@@ -12,9 +12,8 @@ const getDeleteGuardData = guildId => {
   } catch (e) {
     // default deleteGuardData
     deleteGuardData = {
-      users: {
-        // <userId>: { latestTag: '' }
-      }
+      users: [],
+      channelId: 'channel_id'
     }
   }
   return deleteGuardData
@@ -24,21 +23,19 @@ const saveDeleteGuardData = (guildId, deleteGuardData) => {
   fs.writeFileSync(getDeleteGuardPath(guildId), JSON.stringify(deleteGuardData))
 }
 
-const addUIDDeleteGuardData = (user, deleteGuardData) => {
-  deleteGuardData.users[user.id] = {
-    latestTag: user.tag
+const addUIDDeleteGuardData = (userId, deleteGuardData) => {
+  if (!isUIDInDeleteGuardData(userId, deleteGuardData)) {
+    deleteGuardData.users.push(userId)
   }
   return deleteGuardData
 }
 
 const isUIDInDeleteGuardData = (userId, deleteGuardData) => {
-  return Object.keys(deleteGuardData.users).find(id => userId === id) != null
+  return deleteGuardData.users.find(id => userId === id) != null
 }
 
 const removeUIDInDeleteGuardData = (userId, deleteGuardData) => {
-  Object.keys(deleteGuardData.users).forEach(userId => {
-    delete deleteGuardData.users[userId]
-  })
+  deleteGuardData.users = deleteGuardData.users.filter(id => userId !== id)
   return deleteGuardData
 }
 
