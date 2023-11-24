@@ -201,9 +201,7 @@ client.on('messageDelete', async message => {
 
     // value can not be "" or null (presumably can't be falsey)
     // so make sure not to call addFields if there is no message
-    if (message.content) {
-      mainEmbed.addFields({ name: 'Deleted Message', value: message.content })
-    }
+    mainEmbed.addFields({ name: 'Deleted Message', value: message.content ?? '[Empty]' })
 
     const hyperlinks = message.content.match(urlRegex) ?? []
     const attachment = message.attachments.first()
@@ -219,6 +217,43 @@ client.on('messageDelete', async message => {
     })
 
     message.channel.send({ embeds })
+  }
+})
+
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+  const guildId = newMessage.guildId
+  const deleteGuardData = getDeleteGuardData(guildId)
+
+  // if in allowlist, repost message
+  if (Object.keys(deleteGuardData.users).includes(oldMessage.author.id)) {
+    const mainEmbed = new Discord.EmbedBuilder()
+      .setColor(0xecdca8) // golden color
+      .setURL('https://example.com') // This is a hack to get more than one image embed
+      .setAuthor({
+        name: `${oldMessage.author.tag}`,
+        iconURL: oldMessage.author.displayAvatarURL()
+      })
+      .setTimestamp()
+      .setFooter({ text: `ID: ${oldMessage.id}` })
+
+    // value can not be "" or null (presumably can't be falsey)
+    // so make sure not to call addFields if there is no message
+    mainEmbed.addFields({ name: 'Old Message Content', value: oldMessage.content ?? '[Empty]' })
+
+    const hyperlinks = oldMessage.content.match(urlRegex) ?? []
+    const attachment = oldMessage.attachments.first()
+
+    mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
+
+    const embeds = []
+    embeds.push(mainEmbed)
+
+    // https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
+    hyperlinks.forEach(hyperlink => {
+      embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
+    })
+
+    oldMessage.channel.send({ embeds })
   }
 })
 
