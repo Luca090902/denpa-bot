@@ -27,19 +27,29 @@ const removeDeleteGuard = (user, guildId, message) => {
   }
 }
 
-const setChannelIdDeleteGuard = (channelId, guildId, message) => {
+const setChannelIdDeleteGuard = (channelId, guildId, client, message) => {
   const deleteGuardData = getDeleteGuardData(guildId)
   deleteGuardData.channelId = channelId
   saveDeleteGuardData(guildId, deleteGuardData)
+
+  client.channels.fetch(channelId).then(channel => {
+    message.channel.send(`#${channel.name} set successfully.`)
+  })
 }
 
-const listDeleteGuard = (user, guildId, client, message) => {
+const listDeleteGuard = async (user, guildId, client, message) => {
   const deleteGuardData = getDeleteGuardData(guildId)
+  const channel = await client.channels.fetch(deleteGuardData.channelId)
 
-  const userIds = deleteGuardData.users.map(userId => {
-    const user = client.users.cache.get(userId)
-    return `${user.username} (${userId})`
-  })
+  const userIds = []
+  await Promise.all(
+    deleteGuardData.users.map(async userId => {
+      client.users.fetch(userId).then(user => {
+        userIds.push(`${user.username} (${userId})`)
+      })
+    })
+  )
+
   const roleItemsPerPage = 20
   const msgs = []
   const numPages = Math.ceil(userIds.length / roleItemsPerPage)
@@ -61,8 +71,7 @@ const listDeleteGuard = (user, guildId, client, message) => {
       .setDescription(' ')
 
     if (idx === 0) {
-      if (/^\d{18}$/.test(deleteGuardData.channelId)) {
-        const channel = client.channels.cache.get(deleteGuardData.channelId)
+      if (channel) {
         queueEmbed.addFields({ name: 'Channel', value: `#${channel.name} (${channel.id})` })
       } else {
         queueEmbed.addFields({ name: 'Channel', value: '[Empty]' })
@@ -97,7 +106,7 @@ module.exports = {
         } else if (args[0] === 'set') {
           const channelId = args[1].match(/\d{18}/).shift()
           if (channelId) {
-            setChannelIdDeleteGuard(channelId, guildId, message)
+            setChannelIdDeleteGuard(channelId, guildId, client, message)
           } else {
             message.channel.send('Expected a channelId')
           }
