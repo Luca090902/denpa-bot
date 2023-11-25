@@ -28,21 +28,20 @@ const removeDeleteGuard = (user, guildId, message) => {
 }
 
 const setChannelIdDeleteGuard = (channelId, guildId, client, message) => {
-  const deleteGuardData = getDeleteGuardData(guildId)
-  deleteGuardData.channelId = channelId
-  saveDeleteGuardData(guildId, deleteGuardData)
-
-  client.channels
-    .fetch(channelId)
-    .then(channel => {
-      message.channel.send(`#${channel.name} set successfully.`)
-    })
-    .catch(() => message.channel.send('Error in setting channel.'))
+  const channel = client.channels.cache.get(channelId)
+  if (channel) {
+    const deleteGuardData = getDeleteGuardData(guildId)
+    deleteGuardData.channelId = channelId
+    saveDeleteGuardData(guildId, deleteGuardData)
+    message.channel.send(`#${channel.name} set successfully.`)
+  } else {
+    message.channel.send('Error in setting channel.')
+  }
 }
 
 const listDeleteGuard = async (user, guildId, client, message) => {
   const deleteGuardData = getDeleteGuardData(guildId)
-  const channel = await client.channels.fetch(deleteGuardData.channelId).catch(() => {})
+  const channel = await client.channels.cache.get(deleteGuardData.channelId)
 
   const userIds = []
   await Promise.all(
@@ -52,7 +51,9 @@ const listDeleteGuard = async (user, guildId, client, message) => {
         .then(user => {
           userIds.push(`${user.username} (${userId})`)
         })
-        .catch(() => {})
+        .catch(() => {
+          userIds.push(`(${userId})`)
+        })
     })
   )
 
@@ -110,11 +111,11 @@ module.exports = {
         } else if (args[0] === 'remove' && user != null) {
           removeDeleteGuard(user, guildId, message)
         } else if (args[0] === 'set') {
-          const channelId = args[1].match(/\d{18}/).shift()
+          const channelId = args[1]?.match(/\d{18,}/)?.shift()
           if (channelId) {
             setChannelIdDeleteGuard(channelId, guildId, client, message)
           } else {
-            message.channel.send('Expected a channelId')
+            message.channel.send('Expected a channelId.')
           }
         } else {
           message.channel.send(
