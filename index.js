@@ -98,6 +98,10 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
   const woodPath = wood.path(reaction.message.guildId)
   const woodConfig = wood.config(woodPath)
 
+  const cringe = require('./commands/cringe')
+  const cringePath = cringe.path(reaction.message.guildId)
+  const cringeConfig = cringe.config(cringePath)
+
   if (reaction.emoji.name === config.emoji.wood) {
     // Send message to wood channel
     const messageReacted = await client.channels.cache
@@ -151,6 +155,66 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
         // Update list of tracked messages + write to disk
         woodConfig.messages.push(reaction.message.id)
         wood.save(woodPath, woodConfig)
+      })
+    }
+  }
+
+  // Copypasting wood command but for Cringe guard
+  if (reaction.emoji.name === config.emoji.cringe) {
+    // Send message to cringeposting contaiment channel
+    const messageReacted = await client.channels.cache
+      .get(reaction.message.channelId)
+      .messages.fetch(reaction.message.id)
+
+    const cringecount = messageReacted.reactions.cache.get(config.emoji.cringe).count
+
+    if (cringeConfig.messages.includes(reaction.message.id)) return // no duplicates in woodboard
+    if (reaction.message.channelId === cringeConfig.channelId) return // messages in woodboard don't count
+
+    if (cringecount >= cringeConfig.threshold) {
+      client.channels.fetch(cringeConfig.channelId).then(channel => {
+        const mainEmbed = new Discord.EmbedBuilder()
+          .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
+          .setURL('https://example.com') // This is a hack to get more than one image embed
+          .setAuthor({
+            name: `${reaction.message.author.tag} posted cringe`,
+            iconURL: reaction.message.author.displayAvatarURL()
+          })
+          .setTimestamp()
+          .setFooter({ text: `ID: ${reaction.message.id}` })
+
+        // value can not be "" or null (presumably can't be falsey)
+        // so make sure not to call addFields if there is no message
+        if (reaction.message.content) mainEmbed.addFields({ name: 'Message', value: reaction.message.content })
+        mainEmbed.addFields({ name: 'Link', value: reaction.message.url })
+
+        // TODO: Confirm that URLs are indeed images before sending them off to discord?
+
+        // Discord doesn't support displaying more than one (large) image embed at the same time.
+        // HOWEVER, see this: https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
+        const hyperlinks = reaction.message.content.match(urlRegex) ?? []
+        const attachment = reaction.message.attachments.first()
+
+        if (hyperlinks.length !== 0) {
+          mainEmbed.setImage(attachment?.url ?? hyperlinks.shift())
+        } else {
+          if (attachment) mainEmbed.setImage(attachment.url)
+        }
+
+        const embeds = []
+        embeds.push(mainEmbed)
+
+        hyperlinks.forEach(hyperlink => {
+          embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
+        })
+
+        channel.send({ embeds })
+
+        // Update list of tracked messages + write to disk
+        cringeConfig.messages.push(reaction.message.id)
+        cringe.save(cringePath, cringeConfig)
+
+        reaction.message.member.timeout(cringeConfig.timeoutTime * 1000)
       })
     }
   }
