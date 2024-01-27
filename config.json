@@ -15,12 +15,19 @@
     "take": "🎍",
     "cat1": "<:cat1:856666094277361745>",
     "UwU": "<:UwU:856664498094342205>",
-    "cunny": "<:Cunny:856666244006281256>"
+    "cunny": "<:Cunny:856666244006281256>",
+    "cringe": "🔴"
   },
   "tplaylist": "PLb1JKHu_D4MTBXu-8MCFBJ855RpoUuYTf",
   "defaultrole": "denpanaut",
   "defaultWoodConfig": {
     "threshold": 1,
+    "channelId": "channel_id",
+    "messages": []
+  },
+  "defaultCringeConfig": {
+    "threshold": 1,
+    "timeoutTime": 10,
     "channelId": "channel_id",
     "messages": []
   }
