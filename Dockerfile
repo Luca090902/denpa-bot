@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:18.12
 
 # Install app dependencies
 COPY package*.json ./
