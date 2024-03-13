@@ -20,7 +20,7 @@ const client = new Discord.Client({
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 const config = require('./config.json')
-const { SpotifyPlugin } = require('@distube/spotify')
+//const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
 const Util = require('./classes/utils.js')
@@ -37,9 +37,9 @@ client.distube = new DisTube(client, {
   leaveOnStop: false,
   nsfw: true,
   plugins: [
-    new SpotifyPlugin({
+    /*new SpotifyPlugin({
       emitEventsAfterFetching: true
-    }),
+    }),*/
     new SoundCloudPlugin(),
     new YtDlpPlugin()
   ]
