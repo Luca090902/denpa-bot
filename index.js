@@ -62,7 +62,7 @@ fs.readdir('./commands/', (err, files) => {
 
 client.on('ready', () => {
   console.log(`${client.user.tag} is ready to play music.`)
-  client.user.setActivity('Praise be to ;;toromi')
+  client.user.setActivity('Praise be to ;;miiko')
 })
 
 // lazy (tea) auto role

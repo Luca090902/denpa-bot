@@ -1,7 +1,7 @@
 const ytfps = require('ytfps')
 
 module.exports = {
-  name: 'toromi',
+  name: 'miiko',
   aliases: ['t'],
   inVoiceChannel: true,
   run: async (client, message) => {
